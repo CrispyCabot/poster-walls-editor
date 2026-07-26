@@ -6,7 +6,7 @@
 
 **Architecture:** An npm-workspaces monorepo with four workspaces — `app` (React SPA), `api` (Hono in one Lambda), `infrastructure` (CDK), and `packages/*` (shared zod contracts plus a dependency-free layout engine). CDK provisions DynamoDB, Lambda, API Gateway HTTP API, S3, CloudFront, and Cognito into a single us-east-1 stack. GitHub Actions deploys via OIDC role assumption in two phases, because the SPA needs stack outputs at build time.
 
-**Tech Stack:** TypeScript 5.7, Node 22, React 19, Vite 6, Hono 4, AWS CDK 2, DynamoDB, Cognito, vitest, zod 3.
+**Tech Stack:** TypeScript 7, Node 24 LTS, React 19, Vite 8, Hono 4, AWS CDK 2, DynamoDB, Cognito, vitest 4, zod 4.
 
 ## Global Constraints
 
@@ -28,7 +28,7 @@ Copied verbatim from the spec; every task inherits these.
 
 - AWS CLI authenticated as `claude-home-desktop` (IAM user, `AdministratorAccess`), region `us-east-1`. **Already verified.**
 - `gh` authenticated as `CrispyCabot` with `repo` + `workflow` scopes. **Already verified.**
-- Node 22+ and npm 10+ on PATH.
+- Node 24 LTS+ and npm 11+ on PATH.
 - Root access keys deleted in the console — outstanding, does not block this plan.
 
 ## File Structure
@@ -106,15 +106,15 @@ app/
   "private": true,
   "type": "module",
   "workspaces": ["packages/*", "api", "app", "infrastructure"],
-  "engines": { "node": ">=22" },
+  "engines": { "node": ">=24" },
   "scripts": {
     "typecheck": "tsc --build",
     "test": "vitest run",
     "build": "npm run build --workspaces --if-present"
   },
   "devDependencies": {
-    "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   }
 }
 ```
@@ -178,7 +178,7 @@ export default defineConfig({
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "dependencies": { "zod": "^3.24.1" }
+  "dependencies": { "zod": "^4.4.3" }
 }
 ```
 
@@ -218,7 +218,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npm run typecheck
@@ -895,12 +895,12 @@ git commit -m "feat(shared): add zod contracts for walls, posters, and projects"
   "main": "./src/lambda.ts",
   "dependencies": {
     "@pwe/shared": "*",
-    "aws-jwt-verify": "^4.0.1",
-    "hono": "^4.6.14",
-    "zod": "^3.24.1"
+    "aws-jwt-verify": "^5.2.1",
+    "hono": "^4.12.32",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2"
+    "@types/node": "^26.1.1"
   }
 }
 ```
@@ -1131,11 +1131,11 @@ git commit -m "feat(api): add Hono app with health route and uniform errors"
     "deploy": "cdk deploy --require-approval never"
   },
   "dependencies": {
-    "aws-cdk-lib": "^2.173.2",
-    "constructs": "^10.4.2"
+    "aws-cdk-lib": "^2.262.1",
+    "constructs": "^10.7.1"
   },
   "devDependencies": {
-    "aws-cdk": "^2.173.2"
+    "aws-cdk": "^2.1133.0"
   }
 }
 ```
@@ -1920,16 +1920,16 @@ git commit -m "feat(infra): add GitHub OIDC bootstrap stack"
   "dependencies": {
     "@pwe/layout-engine": "*",
     "@pwe/shared": "*",
-    "oidc-client-ts": "^3.1.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^7.1.1"
+    "oidc-client-ts": "^3.5.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.1"
   },
   "devDependencies": {
-    "@types/react": "^19.0.2",
-    "@types/react-dom": "^19.0.2",
-    "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^6.0.7"
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.4",
+    "vite": "^8.1.5"
   }
 }
 ```
@@ -2551,7 +2551,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
 
