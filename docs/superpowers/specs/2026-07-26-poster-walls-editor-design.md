@@ -333,6 +333,17 @@ runs in two phases:
 Credentials come from GitHub OIDC role assumption; no AWS keys are stored in
 GitHub.
 
+The deploy role ARN is held in the repository **secret** `AWS_DEPLOY_ROLE_ARN`,
+not in workflow YAML, so the AWS account ID never appears in the public
+repository. GitHub masks secrets in job logs. The role's trust policy is scoped
+to this repository via the `token.actions.githubusercontent.com:sub` condition,
+so the ARN alone grants nothing to anyone else.
+
+| Name | Kind | Contents |
+|---|---|---|
+| `AWS_DEPLOY_ROLE_ARN` | secret | Full ARN of the OIDC deploy role |
+| `AWS_REGION` | variable | `us-east-2` |
+
 ### Custom domain rollout
 
 The custom domain sits behind a config flag, because the domain's registrar is
@@ -358,18 +369,22 @@ HTTPS-only regardless.
 
 ## Prerequisites and operational notes
 
-Two items need resolving before the first deploy:
+One item needs resolving before the first deploy:
 
-- **AWS access is currently the account root user**
-  (`arn:aws:iam::<ACCOUNT-ID>:root`). Root should not be running deploys. Create
-  an IAM admin user with MFA and configure the CLI against it.
-- **`gh` reports no authenticated host.** Not required — pushes can use plain
-  `git` — but `gh` is convenient for repo and secret setup.
+- **AWS access is currently the account root user.** Root should not be running
+  deploys. Create an IAM admin user with MFA and configure the CLI against it.
+
+`gh` is authenticated as `CrispyCabot` with `repo` and `workflow` scopes and
+ADMIN permission on the target repository. The `workflow` scope matters: without
+it, pushes touching `.github/workflows/` are rejected.
 
 The target repository `https://github.com/CrispyCabot/poster-walls-editor.git`
-is empty; the local repository at
+is empty and **public**. The local repository at
 `C:\Users\cbrid\OneDrive\Documents\Poster Walls Editor` was initialized fresh
 and has `origin` pointing at it.
+
+Because the repository is public, the AWS account ID is kept out of committed
+files. It reaches CI through a GitHub secret, not workflow YAML.
 
 Note that a separate git repository exists at `C:\Users\cbrid` (the user's home
 directory) with no commits. It is unrelated to this project and was left
