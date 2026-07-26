@@ -38,6 +38,10 @@ Signing in redirects to the Cognito Hosted UI using the OIDC authorization-code
 flow with PKCE; Cognito redirects back to `/callback`, which exchanges the code
 for tokens and hands control back to the app via `useAuth()`.
 
+Once signed in, `Home` calls `GET /me` on `@pwe/api` with the access token as a
+bearer credential, proving the token Cognito issued is one the API actually
+accepts — not just one the browser holds.
+
 ## Testing
 
 From the repo root:

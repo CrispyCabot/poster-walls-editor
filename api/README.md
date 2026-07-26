@@ -12,6 +12,8 @@ no Lambda-per-endpoint sprawl.
 src/
   app.ts       the Hono app and its routes — no Lambda coupling, so tests
                can drive it directly with app.request()
+  auth.ts      bearer-token middleware; verify is injected so tests can use a
+               fake without a live user pool
   errors.ts    ApiError plus the handler that shapes every error response
   lambda.ts    Lambda entrypoint; wraps app.ts
 ```
@@ -21,6 +23,7 @@ src/
 | Route | Auth | Purpose |
 |---|---|---|
 | `GET /health` | none | liveness check |
+| `GET /me` | Cognito access token (Bearer) | returns the caller's `{ sub, username }` |
 
 ## Conventions
 
