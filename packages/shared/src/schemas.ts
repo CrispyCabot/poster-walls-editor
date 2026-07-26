@@ -27,7 +27,10 @@ export const WallSchema = z.object({
   heightIn: PositiveInches,
   obstructions: z.array(ObstructionSchema).default([]),
 });
+/** Parsed form: `obstructions` is always present. */
 export type Wall = z.infer<typeof WallSchema>;
+/** Construction form: `obstructions` may be omitted. Use for request bodies. */
+export type WallInput = z.input<typeof WallSchema>;
 
 export const PosterSchema = z.object({
   id: IdSchema,

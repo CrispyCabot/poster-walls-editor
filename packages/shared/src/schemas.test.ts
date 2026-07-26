@@ -6,6 +6,7 @@ import {
   PlacementSchema,
   type PosterInput,
   PosterSchema,
+  type WallInput,
   WallSchema,
 } from './schemas.js';
 
@@ -120,5 +121,12 @@ describe('request-construction types', () => {
     const parsed = PosterSchema.parse(input);
     expect(parsed.frameWidthIn).toBe(1);
     expect(parsed.frameColor).toBe('#000000');
+  });
+
+  it('lets a wall be built without obstructions', () => {
+    const input: WallInput = {
+      id: 'w1', name: 'North', widthIn: 144, heightIn: 96,
+    };
+    expect(WallSchema.parse(input).obstructions).toEqual([]);
   });
 });
