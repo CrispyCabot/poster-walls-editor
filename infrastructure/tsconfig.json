@@ -1,5 +1,5 @@
 {
   "extends": "../tsconfig.base.json",
-  "compilerOptions": { "outDir": "dist", "rootDir": ".", "composite": false },
+  "compilerOptions": { "outDir": "dist", "rootDir": ".", "composite": false, "types": ["node"] },
   "include": ["bin", "lib", "test"]
 }

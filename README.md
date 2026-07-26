@@ -22,7 +22,7 @@ docs/              design spec and implementation plans
 
 ## Setup
 
-Needs Node 22+.
+Needs Node 24+.
 
 ```bash
 npm install

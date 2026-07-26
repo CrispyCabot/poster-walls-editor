@@ -3,15 +3,15 @@
   "private": true,
   "type": "module",
   "workspaces": ["packages/*", "api", "app", "infrastructure"],
-  "engines": { "node": ">=22" },
+  "engines": { "node": ">=24" },
   "scripts": {
     "typecheck": "tsc --build && tsc -p infrastructure/tsconfig.json --noEmit && tsc -p app/tsconfig.json --noEmit",
     "test": "vitest run",
     "build": "npm run build --workspaces --if-present"
   },
   "devDependencies": {
-    "typescript": "^5.7.2",
-    "vitest": "^2.1.8",
-    "tsx": "^4.19.2"
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10",
+    "tsx": "^4.23.1"
   }
 }
