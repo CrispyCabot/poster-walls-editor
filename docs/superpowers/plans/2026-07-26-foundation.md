@@ -215,8 +215,8 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -2519,6 +2519,9 @@ git commit -m "feat(api): verify Cognito access tokens and add /me"
 
 **Files:**
 - Create: `.github/workflows/deploy.yml`
+- Modify: `.github/workflows/ci.yml` — bump `actions/checkout` and
+  `actions/setup-node` from `v4` to `v7`. GitHub runners now warn that v4
+  targets the deprecated Node.js 20 and force it onto Node 24.
 - Test: manual verification against the deployed site.
 
 **Interfaces:**
@@ -2548,14 +2551,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
       - run: npm ci
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
