@@ -57,3 +57,66 @@ describe('MainStack', () => {
     );
   });
 });
+
+describe('web hosting', () => {
+  it('creates a CloudFront distribution that rewrites SPA 403/404 to index.html', () => {
+    const t = synth();
+    t.resourceCountIs('AWS::CloudFront::Distribution', 1);
+    t.hasResourceProperties('AWS::CloudFront::Distribution', {
+      DistributionConfig: Match.objectLike({
+        DefaultRootObject: 'index.html',
+        CustomErrorResponses: Match.arrayWith([
+          Match.objectLike({
+            ErrorCode: 403,
+            ResponseCode: 200,
+            ResponsePagePath: '/index.html',
+          }),
+          Match.objectLike({
+            ErrorCode: 404,
+            ResponseCode: 200,
+            ResponsePagePath: '/index.html',
+          }),
+        ]),
+      }),
+    });
+  });
+
+  it('creates two buckets, both blocking public access', () => {
+    const t = synth();
+    t.resourceCountIs('AWS::S3::Bucket', 2);
+    for (const bucket of Object.values(t.findResources('AWS::S3::Bucket'))) {
+      expect(bucket.Properties.PublicAccessBlockConfiguration).toEqual({
+        BlockPublicAcls: true,
+        BlockPublicPolicy: true,
+        IgnorePublicAcls: true,
+        RestrictPublicBuckets: true,
+      });
+    }
+  });
+});
+
+describe('auth', () => {
+  it('creates a user pool that signs in by email and self-verifies it', () => {
+    synth().hasResourceProperties('AWS::Cognito::UserPool', {
+      UsernameAttributes: ['email'],
+      AutoVerifiedAttributes: ['email'],
+    });
+  });
+
+  it('creates a public client with no secret, using authorization code + PKCE', () => {
+    synth().hasResourceProperties('AWS::Cognito::UserPoolClient', {
+      GenerateSecret: false,
+      AllowedOAuthFlows: ['code'],
+    });
+  });
+
+  it('publishes the auth outputs the SPA build needs', () => {
+    const outputs = synth().findOutputs('*');
+    expect(Object.keys(outputs)).toEqual(
+      expect.arrayContaining([
+        'WebUrl', 'WebBucketName', 'DistributionId',
+        'UserPoolId', 'UserPoolClientId', 'CognitoDomain',
+      ]),
+    );
+  });
+});
