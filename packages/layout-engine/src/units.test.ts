@@ -22,6 +22,11 @@ describe('formatLength', () => {
     expect(formatLength(0, 'inches')).toBe('0"');
     expect(formatLength(0, 'feet-inches')).toBe('0"');
   });
+
+  it('carries a remainder that rounds up to 12 into the feet', () => {
+    expect(formatLength(23.999, 'feet-inches')).toBe("2'");
+    expect(formatLength(11.999, 'feet-inches')).toBe("1'");
+  });
 });
 
 describe('parseLength', () => {

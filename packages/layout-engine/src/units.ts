@@ -8,8 +8,12 @@ function trim(value: number): string {
 export function formatLength(inches: number, mode: LengthMode): string {
   if (mode === 'inches') return `${trim(inches)}"`;
 
-  const feet = Math.floor(inches / 12);
-  const remainder = Math.round((inches - feet * 12) * 100) / 100;
+  // Round to display precision BEFORE splitting feet from inches. Splitting
+  // first lets a remainder that rounds up to 12 render as "1' 12"" — e.g.
+  // 23.999 gives feet=1 and a remainder that rounds to 12, instead of "2'".
+  const rounded = Math.round(inches * 100) / 100;
+  const feet = Math.floor(rounded / 12);
+  const remainder = Math.round((rounded - feet * 12) * 100) / 100;
 
   if (feet === 0) return `${trim(remainder)}"`;
   if (remainder === 0) return `${feet}'`;
