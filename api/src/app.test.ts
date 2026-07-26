@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { createApp } from './app.js';
 import { ApiError } from './errors.js';
 
+/** Shape of the uniform error body, for asserting on parsed JSON. */
+interface ErrorBody {
+  error: { code: string; message: string };
+}
+
 /**
  * Routes that throw on purpose are mounted by the test, not by createApp —
  * production must not ship endpoints whose only job is to fail. Hono's
@@ -46,7 +51,11 @@ describe('error handling', () => {
   it('hides internal failures behind a generic 500', async () => {
     const res = await appWithThrowingRoutes().request('/__throw');
     expect(res.status).toBe(500);
-    const body = await res.json();
+    // Without the DOM lib, `Response.json()` is typed `Promise<unknown>` by
+    // undici-types rather than `Promise<any>`. Cast at the point of use — the
+    // API workspace must NOT pull in DOM, which would make browser globals
+    // (window, document, localStorage) type-check inside Lambda code.
+    const body = (await res.json()) as ErrorBody;
     expect(body.error.code).toBe('internal_error');
     expect(body.error.message).not.toContain('secret');
   });
