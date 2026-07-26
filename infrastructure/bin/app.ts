@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { App } from 'aws-cdk-lib';
+import { BootstrapStack } from '../lib/bootstrap-stack.js';
 import { MainStack } from '../lib/main-stack.js';
 
 const app = new App();
@@ -14,4 +15,14 @@ new MainStack(app, 'PosterWalls', {
     region: process.env.CDK_DEFAULT_REGION ?? 'us-east-1',
   },
   useCustomDomain: false,
+});
+
+new BootstrapStack(app, 'PosterWallsBootstrap', {
+  stackName: 'PosterWallsBootstrap',
+  env: {
+    ...(process.env.CDK_DEFAULT_ACCOUNT ? { account: process.env.CDK_DEFAULT_ACCOUNT } : {}),
+    region: process.env.CDK_DEFAULT_REGION ?? 'us-east-1',
+  },
+  githubOwner: 'CrispyCabot',
+  githubRepo: 'poster-walls-editor',
 });
