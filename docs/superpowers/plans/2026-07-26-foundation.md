@@ -621,6 +621,7 @@ import {
   PlacementSchema,
   type PosterInput,
   PosterSchema,
+  type WallInput,
   WallSchema,
 } from './schemas.js';
 
@@ -736,6 +737,13 @@ describe('request-construction types', () => {
     expect(parsed.frameWidthIn).toBe(1);
     expect(parsed.frameColor).toBe('#000000');
   });
+
+  it('lets a wall be built without obstructions', () => {
+    const input: WallInput = {
+      id: 'w1', name: 'North', widthIn: 144, heightIn: 96,
+    };
+    expect(WallSchema.parse(input).obstructions).toEqual([]);
+  });
 });
 ```
 
@@ -787,7 +795,10 @@ export const WallSchema = z.object({
   heightIn: PositiveInches,
   obstructions: z.array(ObstructionSchema).default([]),
 });
+/** Parsed form: `obstructions` is always present. */
 export type Wall = z.infer<typeof WallSchema>;
+/** Construction form: `obstructions` may be omitted. Use for request bodies. */
+export type WallInput = z.input<typeof WallSchema>;
 
 export const PosterSchema = z.object({
   id: IdSchema,
@@ -840,7 +851,7 @@ export type CreateProjectInput = z.input<typeof CreateProjectSchema>;
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run packages/shared`
-Expected: PASS, 16 tests.
+Expected: PASS, 17 tests.
 
 - [ ] **Step 5: Export and commit**
 
