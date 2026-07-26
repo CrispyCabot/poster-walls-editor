@@ -20,14 +20,18 @@ describe('BootstrapStack', () => {
 
   it('scopes role assumption to this repository only', () => {
     const roles = synth().findResources('AWS::IAM::Role');
-    // Don't assume the deploy role is Object.values(roles)[0]: the
-    // OpenIdConnectProvider construct's backing custom-resource Lambda gets
-    // its own execution role (trusting lambda.amazonaws.com) synthesized
-    // first, ahead of the deploy role. Check across all roles instead of
-    // relying on insertion order.
-    const doc = JSON.stringify(
-      Object.values(roles).map((r) => r.Properties.AssumeRolePolicyDocument),
+    // Don't assume the deploy role is Object.values(roles)[0]. The stack
+    // synthesizes TWO roles, and the OpenIdConnectProvider construct's
+    // backing custom-resource Lambda gets its execution role (trusting
+    // lambda.amazonaws.com) emitted FIRST. Find the web-identity role
+    // explicitly, so both conditions are asserted against the same document.
+    const deployRole = Object.values(roles).find((r) =>
+      JSON.stringify(r.Properties.AssumeRolePolicyDocument)
+        .includes('sts:AssumeRoleWithWebIdentity'),
     );
+    expect(deployRole).toBeDefined();
+
+    const doc = JSON.stringify(deployRole?.Properties.AssumeRolePolicyDocument);
     expect(doc).toContain('repo:CrispyCabot/poster-walls-editor:*');
     expect(doc).toContain('sts.amazonaws.com');
   });
