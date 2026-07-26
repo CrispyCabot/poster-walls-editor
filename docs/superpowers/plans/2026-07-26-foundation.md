@@ -2396,15 +2396,29 @@ export function createAuthMiddleware(verify: TokenVerifier) {
   });
 }
 
-/** Production verifier. Built once per container, then reused. */
+/**
+ * Production verifier. The underlying CognitoJwtVerifier is built on FIRST USE
+ * and then memoized — not when this function is called.
+ *
+ * That deferral is required, not stylistic. `createApp()` evaluates
+ * `deps.verify ?? cognitoVerifier()` unconditionally, so building eagerly
+ * would run `CognitoJwtVerifier.create()` in every test too, where
+ * USER_POOL_ID is unset — and it throws synchronously on an empty pool id.
+ * Every test calling `createApp()` would fail before reaching its assertion.
+ */
 export function cognitoVerifier(): TokenVerifier {
-  const verifier = CognitoJwtVerifier.create({
-    userPoolId: process.env.USER_POOL_ID ?? '',
-    tokenUse: 'access',
-    clientId: process.env.USER_POOL_CLIENT_ID ?? '',
-  });
+  let verifier: ReturnType<typeof buildVerifier> | undefined;
+
+  function buildVerifier() {
+    return CognitoJwtVerifier.create({
+      userPoolId: process.env.USER_POOL_ID ?? '',
+      tokenUse: 'access',
+      clientId: process.env.USER_POOL_CLIENT_ID ?? '',
+    });
+  }
 
   return async (token) => {
+    verifier ??= buildVerifier();
     const payload = await verifier.verify(token);
     return { sub: payload.sub, username: String(payload.username) };
   };
