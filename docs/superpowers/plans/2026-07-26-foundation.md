@@ -898,6 +898,9 @@ git commit -m "feat(shared): add zod contracts for walls, posters, and projects"
     "aws-jwt-verify": "^4.0.1",
     "hono": "^4.6.14",
     "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2"
   }
 }
 ```
@@ -913,6 +916,13 @@ git commit -m "feat(shared): add zod contracts for walls, posters, and projects"
 }
 ```
 
+**Do not add `"lib": ["ES2023", "DOM"]` here.** `@types/node` alone resolves
+`process` and `console`. Adding `DOM` to a Lambda workspace makes `window`,
+`document`, and `localStorage` type-check successfully in code that runs in
+Node — discarding a class of error the compiler would otherwise catch. The
+base config's `"lib": ["ES2023"]` is correct as-is; where that leaves
+`Response.json()` typed `unknown`, cast at the point of use in the test.
+
 Run `npm install` to link the workspace.
 
 - [ ] **Step 2: Write the failing tests**
@@ -923,6 +933,11 @@ Run `npm install` to link the workspace.
 import { describe, expect, it } from 'vitest';
 import { createApp } from './app.js';
 import { ApiError } from './errors.js';
+
+/** Shape of the uniform error body, for asserting on parsed JSON. */
+interface ErrorBody {
+  error: { code: string; message: string };
+}
 
 /**
  * Routes that throw on purpose are mounted by the test, not by createApp —
@@ -968,7 +983,11 @@ describe('error handling', () => {
   it('hides internal failures behind a generic 500', async () => {
     const res = await appWithThrowingRoutes().request('/__throw');
     expect(res.status).toBe(500);
-    const body = await res.json();
+    // Without the DOM lib, `Response.json()` is typed `Promise<unknown>` by
+    // undici-types rather than `Promise<any>`. Cast at the point of use — the
+    // API workspace must NOT pull in DOM, which would make browser globals
+    // (window, document, localStorage) type-check inside Lambda code.
+    const body = (await res.json()) as ErrorBody;
     expect(body.error.code).toBe('internal_error');
     expect(body.error.message).not.toContain('secret');
   });
@@ -2223,6 +2242,11 @@ SPA already has it from the OIDC profile.
 import { describe, expect, it } from 'vitest';
 import { createApp } from './app.js';
 
+/** Shape of the uniform error body, for asserting on parsed JSON. */
+interface ErrorBody {
+  error: { code: string; message: string };
+}
+
 const verify = async (token: string) => {
   if (token !== 'good-token') throw new Error('bad token');
   return { sub: 'user-123', username: 'chris' };
@@ -2259,7 +2283,7 @@ describe('GET /me', () => {
       headers: { Authorization: 'Bearer nope' },
     });
     expect(res.status).toBe(401);
-    const body = await res.json();
+    const body = (await res.json()) as ErrorBody;
     expect(body.error.message).toBe('Invalid token');
     expect(body.error.message).not.toContain('bad token');
   });
