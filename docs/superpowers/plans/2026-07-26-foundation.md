@@ -871,6 +871,24 @@ Run `npm install` to link the workspace.
 ```ts
 import { describe, expect, it } from 'vitest';
 import { createApp } from './app.js';
+import { ApiError } from './errors.js';
+
+/**
+ * Routes that throw on purpose are mounted by the test, not by createApp —
+ * production must not ship endpoints whose only job is to fail. Hono's
+ * onError/notFound are configuration rather than routes, so handlers
+ * registered after createApp still pass through them.
+ */
+function appWithThrowingRoutes() {
+  const app = createApp();
+  app.get('/__boom', () => {
+    throw new ApiError(418, 'teapot', 'short and stout');
+  });
+  app.get('/__throw', () => {
+    throw new Error('secret internal detail');
+  });
+  return app;
+}
 
 describe('GET /health', () => {
   it('returns ok', async () => {
@@ -889,7 +907,7 @@ describe('error handling', () => {
   });
 
   it('maps a thrown ApiError to its status and code', async () => {
-    const res = await createApp().request('/__boom');
+    const res = await appWithThrowingRoutes().request('/__boom');
     expect(res.status).toBe(418);
     await expect(res.json()).resolves.toEqual({
       error: { code: 'teapot', message: 'short and stout' },
@@ -897,7 +915,7 @@ describe('error handling', () => {
   });
 
   it('hides internal failures behind a generic 500', async () => {
-    const res = await createApp().request('/__throw');
+    const res = await appWithThrowingRoutes().request('/__throw');
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.error.code).toBe('internal_error');
@@ -966,7 +984,7 @@ export function errorHandler(err: Error, c: Context) {
 ```ts
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { ApiError, errorHandler, notFound } from './errors.js';
+import { errorHandler, notFound } from './errors.js';
 
 export function createApp(): Hono {
   const app = new Hono();
@@ -980,14 +998,6 @@ export function createApp(): Hono {
   }));
 
   app.get('/health', (c) => c.json({ status: 'ok' }));
-
-  // Test-only routes exercising the error handler.
-  app.get('/__boom', () => {
-    throw new ApiError(418, 'teapot', 'short and stout');
-  });
-  app.get('/__throw', () => {
-    throw new Error('secret internal detail');
-  });
 
   app.notFound(notFound);
   app.onError(errorHandler);
@@ -1089,7 +1099,7 @@ Add `tsx` to the root devDependencies, then run `npm install`.
 
 ```ts
 import { App } from 'aws-cdk-lib';
-import { Template } from 'aws-cdk-lib/assertions';
+import { Match, Template } from 'aws-cdk-lib/assertions';
 import { describe, expect, it } from 'vitest';
 import { MainStack } from '../lib/main-stack.js';
 
@@ -1128,14 +1138,15 @@ describe('MainStack', () => {
   });
 
   it('grants the Lambda access to the table', () => {
+    // CDK's Template matchers are its own — vitest's expect.arrayContaining
+    // is an unrelated asymmetric matcher that hasResourceProperties would
+    // deep-compare as a literal object and never match.
     synth().hasResourceProperties('AWS::IAM::Policy', {
-      PolicyDocument: {
-        Statement: expect.arrayContaining([
-          expect.objectContaining({
-            Action: expect.arrayContaining(['dynamodb:GetItem']),
-          }),
+      PolicyDocument: Match.objectLike({
+        Statement: Match.arrayWith([
+          Match.objectLike({ Action: Match.arrayWith(['dynamodb:GetItem']) }),
         ]),
-      },
+      }),
     });
   });
 
@@ -1328,21 +1339,21 @@ describe('web hosting', () => {
     const t = synth();
     t.resourceCountIs('AWS::CloudFront::Distribution', 1);
     t.hasResourceProperties('AWS::CloudFront::Distribution', {
-      DistributionConfig: {
+      DistributionConfig: Match.objectLike({
         DefaultRootObject: 'index.html',
-        CustomErrorResponses: expect.arrayContaining([
-          expect.objectContaining({
+        CustomErrorResponses: Match.arrayWith([
+          Match.objectLike({
             ErrorCode: 403,
             ResponseCode: 200,
             ResponsePagePath: '/index.html',
           }),
-          expect.objectContaining({
+          Match.objectLike({
             ErrorCode: 404,
             ResponseCode: 200,
             ResponsePagePath: '/index.html',
           }),
         ]),
-      },
+      }),
     });
   });
 
