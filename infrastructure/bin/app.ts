@@ -1,0 +1,17 @@
+#!/usr/bin/env node
+import { App } from 'aws-cdk-lib';
+import { MainStack } from '../lib/main-stack.js';
+
+const app = new App();
+
+new MainStack(app, 'PosterWalls', {
+  stackName: 'PosterWalls',
+  env: {
+    // `exactOptionalPropertyTypes` forbids assigning `string | undefined`
+    // to an optional `string` field, so omit `account` entirely when unset
+    // instead of passing it through as `undefined`.
+    ...(process.env.CDK_DEFAULT_ACCOUNT ? { account: process.env.CDK_DEFAULT_ACCOUNT } : {}),
+    region: process.env.CDK_DEFAULT_REGION ?? 'us-east-1',
+  },
+  useCustomDomain: false,
+});
