@@ -22,7 +22,7 @@ export class ApiConstruct extends Construct {
     this.fn = new NodejsFunction(this, 'Fn', {
       entry: fileURLToPath(new URL('../../../api/src/lambda.ts', import.meta.url)),
       handler: 'handler',
-      runtime: lambda.Runtime.NODEJS_22_X,
+      runtime: lambda.Runtime.NODEJS_24_X,
       architecture: lambda.Architecture.ARM_64,
       memorySize: 512,
       timeout: Duration.seconds(15),

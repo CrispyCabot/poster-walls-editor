@@ -24,9 +24,9 @@ describe('MainStack', () => {
     });
   });
 
-  it('runs the API Lambda on arm64 Node 22', () => {
+  it('runs the API Lambda on arm64 Node 24', () => {
     synth().hasResourceProperties('AWS::Lambda::Function', {
-      Runtime: 'nodejs22.x',
+      Runtime: 'nodejs24.x',
       Architectures: ['arm64'],
     });
   });
