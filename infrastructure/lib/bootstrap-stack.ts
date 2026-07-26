@@ -5,6 +5,21 @@ import { Construct } from 'constructs';
 export interface BootstrapStackProps extends StackProps {
   readonly githubOwner: string;
   readonly githubRepo: string;
+  /**
+   * Numeric GitHub IDs, from `gh api repos/<owner>/<repo>`
+   * (`.owner.id` and `.id`).
+   *
+   * GitHub emits OIDC subjects using IMMUTABLE IDENTIFIERS:
+   *   repo:<owner>@<ownerId>/<repo>@<repoId>:ref:refs/heads/main
+   * not the plain `repo:<owner>/<repo>:...` form most examples show. A trust
+   * policy written against the plain form silently never matches, and STS
+   * reports only "Not authorized to perform sts:AssumeRoleWithWebIdentity".
+   *
+   * Pinning the numeric IDs is also STRONGER than matching names: renaming the
+   * repo or an impostor registering the same name cannot satisfy it.
+   */
+  readonly githubOwnerId: string;
+  readonly githubRepoId: string;
 }
 
 /**
@@ -30,8 +45,10 @@ export class BootstrapStack extends Stack {
           'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com',
         },
         StringLike: {
+          // Immutable-identifier subject form. See BootstrapStackProps.
           'token.actions.githubusercontent.com:sub':
-            `repo:${props.githubOwner}/${props.githubRepo}:*`,
+            `repo:${props.githubOwner}@${props.githubOwnerId}` +
+            `/${props.githubRepo}@${props.githubRepoId}:*`,
         },
       }),
       // CDK deploys assume the CDK bootstrap roles, which requires admin-level

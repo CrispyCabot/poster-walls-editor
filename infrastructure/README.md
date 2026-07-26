@@ -61,6 +61,11 @@ checking them. Run `npm run typecheck` from the repo root.
   which collides with the HttpApi's own default route and breaks synth.
 - Poster images use `RemovalPolicy.RETAIN`; deleting them would break saved
   arrangements and any share link already handed out.
+- GitHub's OIDC `sub` claim uses immutable numeric IDs, not plain names:
+  `repo:<owner>@<ownerId>/<repo>@<repoId>:ref:...`. The trust policy is pinned
+  to `githubOwnerId`/`githubRepoId` for this reason — matching only the plain
+  name form silently never matches, and a rename or impersonation risk is
+  avoided as a side benefit.
 
 ## Testing
 

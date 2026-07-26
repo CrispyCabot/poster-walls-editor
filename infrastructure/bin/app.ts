@@ -25,4 +25,6 @@ new BootstrapStack(app, 'PosterWallsBootstrap', {
   },
   githubOwner: 'CrispyCabot',
   githubRepo: 'poster-walls-editor',
+  githubOwnerId: '18431358',
+  githubRepoId: '1312969424',
 });

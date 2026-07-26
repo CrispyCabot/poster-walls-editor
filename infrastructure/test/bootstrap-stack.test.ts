@@ -9,6 +9,8 @@ function synth() {
     env: { account: '111111111111', region: 'us-east-1' },
     githubOwner: 'CrispyCabot',
     githubRepo: 'poster-walls-editor',
+    githubOwnerId: '18431358',
+    githubRepoId: '1312969424',
   });
   return Template.fromStack(stack);
 }
@@ -32,7 +34,7 @@ describe('BootstrapStack', () => {
     expect(deployRole).toBeDefined();
 
     const doc = JSON.stringify(deployRole?.Properties.AssumeRolePolicyDocument);
-    expect(doc).toContain('repo:CrispyCabot/poster-walls-editor:*');
+    expect(doc).toContain('repo:CrispyCabot@18431358/poster-walls-editor@1312969424:*');
     expect(doc).toContain('sts.amazonaws.com');
   });
 
