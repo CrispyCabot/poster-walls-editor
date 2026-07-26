@@ -374,10 +374,16 @@ HTTPS-only regardless.
 
 ## Prerequisites and operational notes
 
-One item needs resolving before the first deploy:
+AWS access is an IAM user (`claude-home-desktop`) holding `AdministratorAccess`
+through an `admin-access` group, with the CLI defaulting to us-east-1. Root MFA
+is enabled.
 
-- **AWS access is currently the account root user.** Root should not be running
-  deploys. Create an IAM admin user with MFA and configure the CLI against it.
+One item remains, and it requires the console because the API will not let a
+non-root identity do it:
+
+- **Root access keys still exist.** Delete them under Account → Security
+  credentials. Root is the account's recovery identity; that only holds if it
+  has no programmatic credentials in circulation.
 
 `gh` is authenticated as `CrispyCabot` with `repo` and `workflow` scopes and
 ADMIN permission on the target repository. The `workflow` scope matters: without
