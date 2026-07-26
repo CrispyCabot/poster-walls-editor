@@ -29,7 +29,7 @@ test/                   synth assertions
 | `PosterWalls` | GitHub Actions on push to `main` | the application |
 | `PosterWallsBootstrap` | by hand, once, from a local admin identity | the GitHub OIDC provider and the deploy role |
 
-`PosterWallsBootstrap` is defined but not yet deployed. GitHub Actions cannot
+`PosterWallsBootstrap` is deployed by hand, once. GitHub Actions cannot
 deploy it, because it is what grants GitHub the ability to deploy anything.
 
 ## Commands
