@@ -366,7 +366,7 @@ export function parseLength(input: string): number | null {
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run packages/layout-engine`
-Expected: PASS, 10 tests.
+Expected: PASS, 9 tests.
 
 - [ ] **Step 5: Export and commit**
 
@@ -563,7 +563,7 @@ export function toSvgY(wallHeight: number, y: number): number {
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run packages/layout-engine`
-Expected: PASS, 22 tests total across both files.
+Expected: PASS, 21 tests total across both files (9 in `units.test.ts`, 12 in `geometry.test.ts`).
 
 - [ ] **Step 5: Export and commit**
 
@@ -800,7 +800,7 @@ export type CreateProject = z.infer<typeof CreateProjectSchema>;
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run packages/shared`
-Expected: PASS, 13 tests.
+Expected: PASS, 14 tests.
 
 - [ ] **Step 5: Export and commit**
 
