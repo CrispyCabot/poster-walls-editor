@@ -13,7 +13,6 @@ putting it all there avoids a second stack and cross-region references.
 bin/app.ts              entrypoint; instantiates the stacks
 lib/
   main-stack.ts         composes the constructs below
-  bootstrap-stack.ts    GitHub OIDC provider + deploy role (deployed once, by hand)
   constructs/
     data.ts             DynamoDB table
     api.ts              Lambda + API Gateway HTTP API
@@ -27,10 +26,11 @@ test/                   synth assertions
 | Stack | Deployed by | Contains |
 |---|---|---|
 | `PosterWalls` | GitHub Actions on push to `main` | the application |
-| `PosterWallsBootstrap` | a human, once, from a local admin identity | the IAM role GitHub assumes |
 
-The bootstrap stack cannot be deployed by GitHub Actions, because it is what
-grants GitHub the ability to deploy anything.
+A second stack, `PosterWallsBootstrap`, is planned but **not built yet**. It
+will hold the GitHub OIDC provider and the deploy role, and must be deployed
+once by hand from a local admin identity — GitHub Actions cannot deploy it,
+because it is what grants GitHub the ability to deploy anything.
 
 ## Commands
 
