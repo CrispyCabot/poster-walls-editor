@@ -57,7 +57,7 @@ Decided against during design, recorded so they are not silently reintroduced:
 | Auth UI | Cognito Managed Login (Hosted UI), OIDC + PKCE | No password, verification, or reset code to own. |
 | Environments | Single production | Cheapest and simplest. Staging can be added later. |
 | CI auth | GitHub OIDC role assumption | No long-lived AWS keys in GitHub. |
-| Region | us-east-2 | User preference. |
+| Region | us-east-1 | CloudFront requires its certificate there regardless, so a single region means a single stack and no cross-region wiring. |
 
 ## Architecture
 
@@ -103,21 +103,26 @@ cookies, so there is no CSRF exposure and CORS is a few lines of Hono
 middleware. A separate origin keeps CloudFront's cache policy simple and makes
 API traffic easier to inspect.
 
-### Certificate regions
+### Certificates
 
 CloudFront accepts ACM certificates only from **us-east-1**, regardless of where
-the rest of the stack lives. API Gateway regional custom domains require a
-certificate in their own region. The build therefore needs two certificates:
+the rest of the stack lives, and API Gateway regional custom domains require a
+certificate in their own region. Putting the whole stack in us-east-1 collapses
+that constraint: both certificates are issued in the same region as everything
+else.
 
 | Certificate | Region | Consumer |
 |---|---|---|
 | `poster-editor.chrisbridewell.dev` | us-east-1 | CloudFront |
-| `api.poster-editor.chrisbridewell.dev` | us-east-2 | API Gateway |
+| `api.poster-editor.chrisbridewell.dev` | us-east-1 | API Gateway |
 
-This is a `CertificateStack` pinned to us-east-1 plus the main stack in
-us-east-2, wired together with `crossRegionReferences: true`. Route53 is global,
-so one hosted zone validates both. Cognito uses its default
-`.auth.us-east-2.amazoncognito.com` domain and needs no certificate.
+This means **one stack, no `crossRegionReferences`, and no separate certificate
+stack** — a meaningful simplification, since cross-region CDK references
+introduce custom resources and a second CloudFormation deployment that are
+awkward to debug when they fail.
+
+Route53 is global, so one hosted zone validates both certificates. Cognito uses
+its default `.auth.us-east-1.amazoncognito.com` domain and needs no certificate.
 
 ### Estimated cost
 
@@ -342,7 +347,7 @@ so the ARN alone grants nothing to anyone else.
 | Name | Kind | Contents |
 |---|---|---|
 | `AWS_DEPLOY_ROLE_ARN` | secret | Full ARN of the OIDC deploy role |
-| `AWS_REGION` | variable | `us-east-2` |
+| `AWS_REGION` | variable | `us-east-1` |
 
 ### Custom domain rollout
 
