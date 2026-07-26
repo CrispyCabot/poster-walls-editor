@@ -283,6 +283,11 @@ describe('formatLength', () => {
     expect(formatLength(0, 'inches')).toBe('0"');
     expect(formatLength(0, 'feet-inches')).toBe('0"');
   });
+
+  it('carries a remainder that rounds up to 12 into the feet', () => {
+    expect(formatLength(23.999, 'feet-inches')).toBe("2'");
+    expect(formatLength(11.999, 'feet-inches')).toBe("1'");
+  });
 });
 
 describe('parseLength', () => {
@@ -333,8 +338,12 @@ function trim(value: number): string {
 export function formatLength(inches: number, mode: LengthMode): string {
   if (mode === 'inches') return `${trim(inches)}"`;
 
-  const feet = Math.floor(inches / 12);
-  const remainder = Math.round((inches - feet * 12) * 100) / 100;
+  // Round to display precision BEFORE splitting feet from inches. Splitting
+  // first lets a remainder that rounds up to 12 render as "1' 12"" — e.g.
+  // 23.999 gives feet=1 and a remainder that rounds to 12, instead of "2'".
+  const rounded = Math.round(inches * 100) / 100;
+  const feet = Math.floor(rounded / 12);
+  const remainder = Math.round((rounded - feet * 12) * 100) / 100;
 
   if (feet === 0) return `${trim(remainder)}"`;
   if (remainder === 0) return `${feet}'`;
@@ -366,7 +375,7 @@ export function parseLength(input: string): number | null {
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run packages/layout-engine`
-Expected: PASS, 9 tests.
+Expected: PASS, 10 tests.
 
 - [ ] **Step 5: Export and commit**
 
@@ -563,7 +572,7 @@ export function toSvgY(wallHeight: number, y: number): number {
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run packages/layout-engine`
-Expected: PASS, 21 tests total across both files (9 in `units.test.ts`, 12 in `geometry.test.ts`).
+Expected: PASS, 22 tests total across both files (10 in `units.test.ts`, 12 in `geometry.test.ts`).
 
 - [ ] **Step 5: Export and commit**
 
