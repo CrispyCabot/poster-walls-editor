@@ -1309,7 +1309,14 @@ export class ApiConstruct extends Construct {
 
     this.httpApi = new apigwv2.HttpApi(this, 'HttpApi', {
       // Hono owns CORS so preflight and actual responses stay consistent.
-      defaultIntegration: new HttpLambdaIntegration('Default', this.fn),
+      //
+      // The integration id must NOT be 'Default'. `constructs` strips path
+      // components literally named "Default" when hashing logical IDs (see
+      // constructs/lib/private/uniqueid.js), so it would collide with the
+      // HttpApi's own internal default-route construct and fail synth with
+      // `SectionAlreadyContains: section 'Resources' already contains
+      // 'ApiHttpApiDefaultRoute...'`.
+      defaultIntegration: new HttpLambdaIntegration('DefaultIntegration', this.fn),
     });
   }
 }
@@ -1355,7 +1362,13 @@ const app = new App();
 new MainStack(app, 'PosterWalls', {
   stackName: 'PosterWalls',
   env: {
-    account: process.env.CDK_DEFAULT_ACCOUNT,
+    // `exactOptionalPropertyTypes` forbids assigning `string | undefined` to
+    // an optional `string` field (TS2375), so omit `account` entirely when
+    // unset rather than passing `undefined` through. An absent account
+    // yields an environment-agnostic stack, which is what synth-only CI wants.
+    ...(process.env.CDK_DEFAULT_ACCOUNT
+      ? { account: process.env.CDK_DEFAULT_ACCOUNT }
+      : {}),
     region: process.env.CDK_DEFAULT_REGION ?? 'us-east-1',
   },
   useCustomDomain: false,
@@ -1369,7 +1382,28 @@ Expected: PASS, 5 tests.
 Then: `cd infrastructure && npx cdk synth --quiet`
 Expected: exits 0, writes `cdk.out/`.
 
-- [ ] **Step 8: Add synth to CI and commit**
+- [ ] **Step 8: Close the infrastructure typecheck gap**
+
+`infrastructure/tsconfig.json` sets `"composite": false`, so it cannot be a
+`tsc --build` project reference and the root `typecheck` script skips it
+entirely. Nothing else covers it either: `cdk synth` runs `bin/app.ts` through
+`tsx`, and vitest transpiles through esbuild — **both strip types without
+checking them.** Left as-is, every type error in the CDK code ships silently.
+
+Extend the root `package.json` script so one command still checks everything:
+
+```json
+    "typecheck": "tsc --build && tsc -p infrastructure/tsconfig.json --noEmit",
+```
+
+CI already runs `npm run typecheck`, so this needs no workflow change and also
+protects local development.
+
+Verify it actually catches errors: add `thisFieldDoesNotExist: 123` to the
+`MainStack` props in `infrastructure/bin/app.ts`, run `npm run typecheck`, and
+confirm it now FAILS. Remove the line and confirm it passes.
+
+- [ ] **Step 9: Add synth to CI and commit**
 
 Append to the `verify` job in `.github/workflows/ci.yml`:
 
