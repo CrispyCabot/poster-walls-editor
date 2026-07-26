@@ -6,7 +6,7 @@
 
 **Architecture:** An npm-workspaces monorepo with four workspaces — `app` (React SPA), `api` (Hono in one Lambda), `infrastructure` (CDK), and `packages/*` (shared zod contracts plus a dependency-free layout engine). CDK provisions DynamoDB, Lambda, API Gateway HTTP API, S3, CloudFront, and Cognito into a single us-east-1 stack. GitHub Actions deploys via OIDC role assumption in two phases, because the SPA needs stack outputs at build time.
 
-**Tech Stack:** TypeScript 7, Node 24 LTS, React 19, Vite 8, Hono 4, AWS CDK 2, DynamoDB, Cognito, vitest 4, zod 4.
+**Tech Stack:** TypeScript 5.9, Node 24 LTS, React 19, Vite 8, Hono 4, AWS CDK 2, DynamoDB, Cognito, vitest 4, zod 4.
 
 ## Global Constraints
 
@@ -113,7 +113,7 @@ app/
     "build": "npm run build --workspaces --if-present"
   },
   "devDependencies": {
-    "typescript": "^7.0.2",
+    "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   }
 }
