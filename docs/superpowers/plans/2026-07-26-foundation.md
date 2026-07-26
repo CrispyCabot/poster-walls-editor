@@ -615,9 +615,11 @@ git commit -m "feat(layout-engine): add wall-space geometry primitives"
 ```ts
 import { describe, expect, it } from 'vitest';
 import {
+  type CreateProjectInput,
   CreateProjectSchema,
   ObstructionSchema,
   PlacementSchema,
+  type PosterInput,
   PosterSchema,
   WallSchema,
 } from './schemas.js';
@@ -717,6 +719,24 @@ describe('CreateProjectSchema', () => {
     expect(() => CreateProjectSchema.parse({ name: '' })).toThrow();
   });
 });
+
+// These two also serve as compile-time regressions: they only typecheck if the
+// Input aliases resolve to zod's input type, where defaulted fields are optional.
+describe('request-construction types', () => {
+  it('lets a project request omit visibility', () => {
+    const body: CreateProjectInput = { name: 'Living Room' };
+    expect(CreateProjectSchema.parse(body).visibility).toBe('private');
+  });
+
+  it('lets a poster be built without frame fields', () => {
+    const input: PosterInput = {
+      id: 'p1', name: 'Akira', widthIn: 24, heightIn: 36,
+    };
+    const parsed = PosterSchema.parse(input);
+    expect(parsed.frameWidthIn).toBe(1);
+    expect(parsed.frameColor).toBe('#000000');
+  });
+});
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -778,7 +798,10 @@ export const PosterSchema = z.object({
   frameColor: HexColor.default('#000000'),
   imageKey: z.string().optional(),
 });
+/** Parsed form: defaulted fields are present. */
 export type Poster = z.infer<typeof PosterSchema>;
+/** Construction form: defaulted fields may be omitted. Use for request bodies. */
+export type PosterInput = z.input<typeof PosterSchema>;
 
 export const PlacementSchema = z.object({
   posterId: IdSchema,
@@ -803,13 +826,21 @@ export const CreateProjectSchema = z.object({
   name: z.string().min(1).max(200),
   visibility: VisibilitySchema.default('private'),
 });
+/** Parsed form: `visibility` is always present. */
 export type CreateProject = z.infer<typeof CreateProjectSchema>;
+/**
+ * Request-body form: `visibility` may be omitted. `z.infer` resolves to zod's
+ * OUTPUT type, where a `.default()` field is required — so typing a request
+ * body as `CreateProject` would reject `{ name: 'x' }`, the very omission the
+ * default exists to serve.
+ */
+export type CreateProjectInput = z.input<typeof CreateProjectSchema>;
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run packages/shared`
-Expected: PASS, 14 tests.
+Expected: PASS, 16 tests.
 
 - [ ] **Step 5: Export and commit**
 
