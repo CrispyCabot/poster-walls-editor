@@ -1729,6 +1729,8 @@ function synth() {
     env: { account: '111111111111', region: 'us-east-1' },
     githubOwner: 'CrispyCabot',
     githubRepo: 'poster-walls-editor',
+    githubOwnerId: '18431358',
+    githubRepoId: '1312969424',
   });
   return Template.fromStack(stack);
 }
@@ -1752,7 +1754,9 @@ describe('BootstrapStack', () => {
     expect(deployRole).toBeDefined();
 
     const doc = JSON.stringify(deployRole?.Properties.AssumeRolePolicyDocument);
-    expect(doc).toContain('repo:CrispyCabot/poster-walls-editor:*');
+    expect(doc).toContain(
+      'repo:CrispyCabot@18431358/poster-walls-editor@1312969424:*',
+    );
     expect(doc).toContain('sts.amazonaws.com');
   });
 
@@ -1779,6 +1783,21 @@ import { Construct } from 'constructs';
 export interface BootstrapStackProps extends StackProps {
   readonly githubOwner: string;
   readonly githubRepo: string;
+  /**
+   * Numeric GitHub IDs, from `gh api repos/<owner>/<repo>`
+   * (`.owner.id` and `.id`).
+   *
+   * GitHub emits OIDC subjects using IMMUTABLE IDENTIFIERS:
+   *   repo:<owner>@<ownerId>/<repo>@<repoId>:ref:refs/heads/main
+   * not the plain `repo:<owner>/<repo>:...` form most examples show. A trust
+   * policy written against the plain form silently never matches, and STS
+   * reports only "Not authorized to perform sts:AssumeRoleWithWebIdentity".
+   *
+   * Pinning the numeric IDs is also STRONGER than matching names: renaming the
+   * repo or an impostor registering the same name cannot satisfy it.
+   */
+  readonly githubOwnerId: string;
+  readonly githubRepoId: string;
 }
 
 /**
@@ -1804,8 +1823,10 @@ export class BootstrapStack extends Stack {
           'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com',
         },
         StringLike: {
+          // Immutable-identifier subject form. See BootstrapStackProps.
           'token.actions.githubusercontent.com:sub':
-            `repo:${props.githubOwner}/${props.githubRepo}:*`,
+            `repo:${props.githubOwner}@${props.githubOwnerId}` +
+            `/${props.githubRepo}@${props.githubRepoId}:*`,
         },
       }),
       // CDK deploys assume the CDK bootstrap roles, which requires admin-level
@@ -1831,6 +1852,8 @@ new BootstrapStack(app, 'PosterWallsBootstrap', {
   },
   githubOwner: 'CrispyCabot',
   githubRepo: 'poster-walls-editor',
+  githubOwnerId: '18431358',
+  githubRepoId: '1312969424',
 });
 ```
 
