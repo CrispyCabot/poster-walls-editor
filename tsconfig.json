@@ -1,6 +1,7 @@
 {
   "files": [],
   "references": [
+    { "path": "api" },
     { "path": "packages/layout-engine" },
     { "path": "packages/shared" }
   ]
