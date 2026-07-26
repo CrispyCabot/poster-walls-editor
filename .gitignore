@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+
+# builds
+dist/
+build/
+*.tsbuildinfo
+
+# cdk
+infrastructure/cdk.out/
+cdk.out/
+.cdk.staging/
+
+# env / secrets
+.env
+.env.*
+!.env.example
+.aws-sam/
+
+# logs
+*.log
+npm-debug.log*
+
+# editor / os
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+
+# test output
+coverage/
