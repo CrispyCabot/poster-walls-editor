@@ -11,7 +11,7 @@ Runs on AWS. React frontend, Hono API on Lambda, DynamoDB, Cognito.
 ## Layout
 
 ```
-app/               React SPA                    (not built yet)
+app/               React SPA — Cognito login via OIDC + PKCE
 api/               Hono API, runs in one Lambda
 infrastructure/    AWS CDK — all cloud resources
 packages/
