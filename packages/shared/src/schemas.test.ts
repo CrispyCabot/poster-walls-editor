@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  type CreateProjectInput,
   CreateProjectSchema,
   ObstructionSchema,
   PlacementSchema,
+  type PosterInput,
   PosterSchema,
   WallSchema,
 } from './schemas.js';
@@ -100,5 +102,23 @@ describe('CreateProjectSchema', () => {
 
   it('rejects an empty name', () => {
     expect(() => CreateProjectSchema.parse({ name: '' })).toThrow();
+  });
+});
+
+// These two also serve as compile-time regressions: they only typecheck if the
+// Input aliases resolve to zod's input type, where defaulted fields are optional.
+describe('request-construction types', () => {
+  it('lets a project request omit visibility', () => {
+    const body: CreateProjectInput = { name: 'Living Room' };
+    expect(CreateProjectSchema.parse(body).visibility).toBe('private');
+  });
+
+  it('lets a poster be built without frame fields', () => {
+    const input: PosterInput = {
+      id: 'p1', name: 'Akira', widthIn: 24, heightIn: 36,
+    };
+    const parsed = PosterSchema.parse(input);
+    expect(parsed.frameWidthIn).toBe(1);
+    expect(parsed.frameColor).toBe('#000000');
   });
 });
