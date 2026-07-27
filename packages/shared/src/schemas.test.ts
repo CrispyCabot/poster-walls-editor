@@ -54,7 +54,7 @@ describe('ObstructionSchema', () => {
   it('accepts every documented kind', () => {
     for (const kind of ['door', 'window', 'outlet', 'generic'] as const) {
       const parsed = ObstructionSchema.parse({
-        id: 'o1', kind, label: 'x', x: 0, y: 0, width: 30, height: 80,
+        id: 'o1', kind, label: 'x', xIn: 0, yIn: 0, widthIn: 30, heightIn: 80,
       });
       expect(parsed.kind).toBe(kind);
     }
@@ -62,14 +62,14 @@ describe('ObstructionSchema', () => {
 
   it('rejects an unknown kind', () => {
     expect(() => ObstructionSchema.parse({
-      id: 'o1', kind: 'skylight', label: 'x', x: 0, y: 0, width: 1, height: 1,
+      id: 'o1', kind: 'skylight', label: 'x', xIn: 0, yIn: 0, widthIn: 1, heightIn: 1,
     })).toThrow();
   });
 
   it('permits an obstruction at the wall origin', () => {
     expect(ObstructionSchema.parse({
-      id: 'o1', kind: 'door', label: 'Front', x: 0, y: 0, width: 32, height: 80,
-    }).x).toBe(0);
+      id: 'o1', kind: 'door', label: 'Front', xIn: 0, yIn: 0, widthIn: 32, heightIn: 80,
+    }).xIn).toBe(0);
   });
 });
 
@@ -90,8 +90,8 @@ describe('WallSchema', () => {
 
 describe('PlacementSchema', () => {
   it('accepts a negative center, since a poster may overhang while dragging', () => {
-    expect(PlacementSchema.parse({ posterId: 'p1', centerX: -2, centerY: 10 }))
-      .toMatchObject({ centerX: -2 });
+    expect(PlacementSchema.parse({ posterId: 'p1', centerXIn: -2, centerYIn: 10 }))
+      .toMatchObject({ centerXIn: -2 });
   });
 });
 

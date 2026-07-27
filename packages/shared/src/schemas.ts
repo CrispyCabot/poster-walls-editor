@@ -13,10 +13,10 @@ export const ObstructionSchema = z.object({
   kind: ObstructionKindSchema,
   label: z.string().max(80),
   /** Bottom-left corner in wall space. */
-  x: z.number().finite(),
-  y: z.number().finite(),
-  width: PositiveInches,
-  height: PositiveInches,
+  xIn: z.number().finite(),
+  yIn: z.number().finite(),
+  widthIn: PositiveInches,
+  heightIn: PositiveInches,
 });
 export type Obstruction = z.infer<typeof ObstructionSchema>;
 
@@ -49,8 +49,8 @@ export type PosterInput = z.input<typeof PosterSchema>;
 export const PlacementSchema = z.object({
   posterId: IdSchema,
   /** Center of the framed poster, in wall space. */
-  centerX: z.number().finite(),
-  centerY: z.number().finite(),
+  centerXIn: z.number().finite(),
+  centerYIn: z.number().finite(),
 });
 export type Placement = z.infer<typeof PlacementSchema>;
 

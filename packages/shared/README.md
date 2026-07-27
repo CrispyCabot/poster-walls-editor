@@ -33,6 +33,17 @@ Note these are **compile-time** guarantees. Vitest transpiles without type
 checking, so `npm test` alone will not catch a regression here — `npm run
 typecheck` is what enforces it.
 
+## Unit suffixes
+
+Every coordinate and dimension field here carries an explicit `In` suffix
+(`widthIn`, `xIn`, `centerXIn`, ...) because this is the **persisted**
+contract — the field name is the only place a reader learns the unit.
+`packages/layout-engine`'s `Rect`/`Point`/`Size` deliberately do **not**
+follow this convention: that module is internal, documents its inch
+convention once in its own README, and uses plain geometry names (`x`,
+`width`, `y`). Do not "fix" that inconsistency — it is a boundary, not a
+mistake.
+
 ## Defaults
 
 Set by the product spec:
