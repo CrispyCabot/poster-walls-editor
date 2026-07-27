@@ -65,6 +65,7 @@ export async function listPosters(
     heightIn: Number(i.heightIn),
     frameWidthIn: Number(i.frameWidthIn),
     frameColor: String(i.frameColor),
+    shape: (i.shape === 'circle' ? 'circle' : 'rect') as 'rect' | 'circle',
     ...(i.imageKey === undefined ? {} : { imageKey: String(i.imageKey) }),
   }));
 }

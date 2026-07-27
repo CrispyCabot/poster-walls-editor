@@ -185,52 +185,114 @@ export function WallCanvas({
               setPreview(placement);
             }}
           >
-            <rect
-              x={corner.x}
-              y={corner.y}
-              width={frameW}
-              height={frameH}
-              fill={poster.frameColor}
-            />
-            {href === undefined ? (
+            {poster.shape === 'circle' ? (
               <>
-                <rect
-                  x={corner.x + inset}
-                  y={corner.y + inset}
-                  width={artW}
-                  height={artH}
-                  fill="#ffffff"
+                <ellipse
+                  cx={corner.x + frameW / 2}
+                  cy={corner.y + frameH / 2}
+                  rx={frameW / 2}
+                  ry={frameH / 2}
+                  fill={poster.frameColor}
                 />
-                <text
-                  x={corner.x + frameW / 2}
-                  y={corner.y + frameH / 2}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fontSize={Math.max(9, Math.min(15, artW / 8))}
-                  fill="#1a1d21"
-                >
-                  {poster.name}
-                </text>
+                <clipPath id={`clip-${placement.posterId}`}>
+                  <ellipse
+                    cx={corner.x + frameW / 2}
+                    cy={corner.y + frameH / 2}
+                    rx={artW / 2}
+                    ry={artH / 2}
+                  />
+                </clipPath>
+                {href === undefined ? (
+                  <>
+                    <ellipse
+                      cx={corner.x + frameW / 2}
+                      cy={corner.y + frameH / 2}
+                      rx={artW / 2}
+                      ry={artH / 2}
+                      fill="#ffffff"
+                    />
+                    <text
+                      x={corner.x + frameW / 2}
+                      y={corner.y + frameH / 2}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize={Math.max(8, Math.min(14, artW / 9))}
+                      fill="#1a1d21"
+                    >
+                      {poster.name}
+                    </text>
+                  </>
+                ) : (
+                  <image
+                    href={href}
+                    x={corner.x + inset}
+                    y={corner.y + inset}
+                    width={artW}
+                    height={artH}
+                    preserveAspectRatio="xMidYMid slice"
+                    clipPath={`url(#clip-${placement.posterId})`}
+                  />
+                )}
+                <ellipse
+                  cx={corner.x + frameW / 2}
+                  cy={corner.y + frameH / 2}
+                  rx={frameW / 2}
+                  ry={frameH / 2}
+                  fill="none"
+                  stroke={dragging === placement.posterId ? '#2563eb' : 'rgb(0 0 0 / 0.25)'}
+                  strokeWidth={dragging === placement.posterId ? 2 : 1}
+                />
               </>
             ) : (
-              <image
-                href={href}
-                x={corner.x + inset}
-                y={corner.y + inset}
-                width={artW}
-                height={artH}
-                preserveAspectRatio="xMidYMid slice"
-              />
+              <>
+                <rect
+                  x={corner.x}
+                  y={corner.y}
+                  width={frameW}
+                  height={frameH}
+                  fill={poster.frameColor}
+                />
+                {href === undefined ? (
+                  <>
+                    <rect
+                      x={corner.x + inset}
+                      y={corner.y + inset}
+                      width={artW}
+                      height={artH}
+                      fill="#ffffff"
+                    />
+                    <text
+                      x={corner.x + frameW / 2}
+                      y={corner.y + frameH / 2}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize={Math.max(9, Math.min(15, artW / 8))}
+                      fill="#1a1d21"
+                    >
+                      {poster.name}
+                    </text>
+                  </>
+                ) : (
+                  <image
+                    href={href}
+                    x={corner.x + inset}
+                    y={corner.y + inset}
+                    width={artW}
+                    height={artH}
+                    preserveAspectRatio="xMidYMid slice"
+                  />
+                )}
+                <rect
+                  x={corner.x}
+                  y={corner.y}
+                  width={frameW}
+                  height={frameH}
+                  fill="none"
+                  stroke={dragging === placement.posterId ? '#2563eb' : 'rgb(0 0 0 / 0.25)'}
+                  strokeWidth={dragging === placement.posterId ? 2 : 1}
+                />
+              </>
             )}
-            <rect
-              x={corner.x}
-              y={corner.y}
-              width={frameW}
-              height={frameH}
-              fill="none"
-              stroke={dragging === placement.posterId ? '#2563eb' : 'rgb(0 0 0 / 0.25)'}
-              strokeWidth={dragging === placement.posterId ? 2 : 1}
-            />
           </g>
         );
       })}

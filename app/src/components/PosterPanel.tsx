@@ -12,6 +12,7 @@ export interface PosterPanelProps {
     heightIn: number;
     frameWidthIn: number;
     frameColor: string;
+    shape: 'rect' | 'circle';
     imageKey?: string;
   }) => void;
   onDelete: (posterId: string) => void;
@@ -36,6 +37,7 @@ export function PosterPanel({
   const [heightIn, setHeightIn] = useState('36');
   const [frameWidthIn, setFrameWidthIn] = useState('1');
   const [frameColor, setFrameColor] = useState('#000000');
+  const [shape, setShape] = useState<'rect' | 'circle'>('rect');
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +68,7 @@ export function PosterPanel({
         heightIn: h,
         frameWidthIn: f,
         frameColor,
+        shape,
         ...(imageKey === undefined ? {} : { imageKey }),
       });
       setName('');
@@ -171,6 +174,14 @@ export function PosterPanel({
               value={frameColor}
               onChange={(e) => setFrameColor(e.target.value)}
             />
+          </div>
+
+          <div className="field field--num">
+            <label htmlFor="poster-shape">Shape</label>
+            <select id="poster-shape" value={shape} onChange={(e) => setShape(e.target.value as 'rect' | 'circle')}>
+              <option value="rect">Rectangle</option>
+              <option value="circle">Circle</option>
+            </select>
           </div>
 
           <div className="field field--full">
