@@ -12,10 +12,10 @@ import { useRef, useState } from 'react';
 import { getConfig } from '../config.js';
 
 const KIND_FILL: Record<Obstruction['kind'], string> = {
-  door: '#d9c9a8',
-  window: '#cfe0ee',
-  outlet: '#dcdfe3',
-  generic: '#dedbd5',
+  door: 'var(--obstruction-door)',
+  window: 'var(--obstruction-window)',
+  outlet: 'var(--obstruction-outlet)',
+  generic: 'var(--obstruction-generic)',
 };
 
 export interface WallCanvasProps {
@@ -122,7 +122,7 @@ export function WallCanvas({
         width={drawnWidth}
         height={drawnHeight}
         fill={wall.backgroundColor}
-        stroke="#b6bdc4"
+        stroke="var(--canvas-edge)"
         strokeWidth={1}
       />
 
@@ -140,7 +140,7 @@ export function WallCanvas({
             width={o.widthIn * fit.scale}
             height={o.heightIn * fit.scale}
             fill={KIND_FILL[o.kind]}
-            stroke="#98a1aa"
+            stroke="var(--obstruction-edge)"
             strokeWidth={1}
           />
         );
@@ -209,7 +209,7 @@ export function WallCanvas({
                       cy={corner.y + frameH / 2}
                       rx={artW / 2}
                       ry={artH / 2}
-                      fill="#ffffff"
+                      fill="var(--poster-blank)"
                     />
                     <text
                       x={corner.x + frameW / 2}
@@ -217,7 +217,7 @@ export function WallCanvas({
                       textAnchor="middle"
                       dominantBaseline="middle"
                       fontSize={Math.max(8, Math.min(14, artW / 9))}
-                      fill="#1a1d21"
+                      fill="var(--poster-blank-ink)"
                     >
                       {poster.name}
                     </text>
@@ -239,7 +239,7 @@ export function WallCanvas({
                   rx={frameW / 2}
                   ry={frameH / 2}
                   fill="none"
-                  stroke={dragging === placement.posterId ? '#2563eb' : 'rgb(0 0 0 / 0.25)'}
+                  stroke={dragging === placement.posterId ? 'var(--canvas-selected)' : 'var(--poster-outline)'}
                   strokeWidth={dragging === placement.posterId ? 2 : 1}
                 />
               </>
@@ -259,7 +259,7 @@ export function WallCanvas({
                       y={corner.y + inset}
                       width={artW}
                       height={artH}
-                      fill="#ffffff"
+                      fill="var(--poster-blank)"
                     />
                     <text
                       x={corner.x + frameW / 2}
@@ -267,7 +267,7 @@ export function WallCanvas({
                       textAnchor="middle"
                       dominantBaseline="middle"
                       fontSize={Math.max(9, Math.min(15, artW / 8))}
-                      fill="#1a1d21"
+                      fill="var(--poster-blank-ink)"
                     >
                       {poster.name}
                     </text>
@@ -288,7 +288,7 @@ export function WallCanvas({
                   width={frameW}
                   height={frameH}
                   fill="none"
-                  stroke={dragging === placement.posterId ? '#2563eb' : 'rgb(0 0 0 / 0.25)'}
+                  stroke={dragging === placement.posterId ? 'var(--canvas-selected)' : 'var(--poster-outline)'}
                   strokeWidth={dragging === placement.posterId ? 2 : 1}
                 />
               </>

@@ -1,0 +1,108 @@
+/* ---------------------------------------------------------------------------
+   Themes.
+
+   Every colour, font, radius, and texture the interface uses lives here. No
+   other stylesheet, and no component, names a colour directly — so adding a
+   theme means adding one block below and nothing else.
+
+   Two things are deliberately NOT themed, because they are the user's data
+   rather than chrome: the wall's own background colour, and each poster's
+   frame colour and artwork. Those look identical whichever theme is active.
+   --------------------------------------------------------------------------- */
+
+@import '@fontsource-variable/oswald';
+
+:root,
+:root[data-theme='minimal'] {
+  /* --- surfaces --- */
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --overlay: none;
+
+  /* --- ink --- */
+  --text: #000000;
+  --text-soft: #5a5a5a;
+  --text-inverse: #ffffff;
+
+  /* --- lines --- */
+  --border: #d6d6d6;
+  --border-strong: #000000;
+
+  /* --- the one accent --- */
+  --accent: #d40000;
+  --accent-hover: #a80000;
+  --accent-soft: #ffecec;
+  --accent-ink: #ffffff;
+  --danger: #d40000;
+  --danger-soft: #ffecec;
+
+  /* --- canvas chrome (NOT the wall colour itself) --- */
+  --canvas-edge: #000000;
+  --canvas-selected: #d40000;
+  --poster-outline: rgb(0 0 0 / 0.3);
+  --poster-blank: #ffffff;
+  --poster-blank-ink: #000000;
+  --obstruction-door: #d6d6d6;
+  --obstruction-window: #ededed;
+  --obstruction-outlet: #c4c4c4;
+  --obstruction-generic: #dcdcdc;
+  --obstruction-edge: #000000;
+
+  /* --- type --- */
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-display: var(--font-body);
+  --display-transform: none;
+  --display-tracking: -0.01em;
+  --display-weight: 650;
+
+  /* --- shape --- */
+  --radius: 6px;
+  --radius-pill: 6px;
+  --border-width: 1px;
+}
+
+:root[data-theme='metal'] {
+  --bg: #0a0a0b;
+  --surface: #131315;
+  --surface-raised: #1a1a1d;
+  /* Fine grain, generated rather than fetched so there is no asset to ship. */
+  --overlay: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+
+  --text: #ecebe9;
+  --text-soft: #8f8d8a;
+  --text-inverse: #0a0a0b;
+
+  --border: #2a2a2e;
+  --border-strong: #45454b;
+
+  --accent: #c1121f;
+  --accent-hover: #e01427;
+  --accent-soft: #2a0d10;
+  --accent-ink: #ffffff;
+  --danger: #e0455a;
+  --danger-soft: #2a0d10;
+
+  --canvas-edge: #45454b;
+  --canvas-selected: #e01427;
+  --poster-outline: rgb(0 0 0 / 0.5);
+  --poster-blank: #ecebe9;
+  --poster-blank-ink: #0a0a0b;
+  --obstruction-door: #3a3a3f;
+  --obstruction-window: #2f3339;
+  --obstruction-outlet: #303034;
+  --obstruction-generic: #35353a;
+  --obstruction-edge: #17171a;
+
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-display: 'Oswald Variable', 'Arial Narrow', system-ui, sans-serif;
+  --display-transform: uppercase;
+  --display-tracking: 0.02em;
+  --display-weight: 600;
+
+  --radius: 2px;
+  --radius-pill: 2px;
+  --border-width: 1px;
+}

@@ -49,3 +49,27 @@ From the repo root:
 ```bash
 npx vitest run app
 ```
+
+## Theming
+
+All colours, fonts, and textures live in `src/theme/themes.css`. No other
+stylesheet and no component names a colour directly, so adding a theme means
+adding one block there and nothing else.
+
+Switch themes by changing one line in `src/theme/config.ts`:
+
+```ts
+export const ACTIVE_THEME: ThemeName = 'metal';
+```
+
+| Theme | Look |
+|---|---|
+| `metal` | Near-black, bone white, blood red. Condensed caps, fine grain. Default. |
+| `minimal` | Black, white, and red. Nothing else. |
+
+`applyTheme()` sets `data-theme` on `<html>` at boot, so a UI switcher later
+just needs to call it with a different name.
+
+**Two things are deliberately not themed** — the wall's own background colour
+and each poster's frame colour and artwork. Those are the user's data, and they
+must look the same whichever theme is active.

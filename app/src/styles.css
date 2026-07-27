@@ -1,15 +1,12 @@
-:root {
-  --bg: #f6f7f8;
-  --surface: #ffffff;
-  --border: #d8dce0;
-  --border-strong: #b6bdc4;
-  --text: #1a1d21;
-  --text-soft: #667080;
-  --accent: #2563eb;
-  --accent-soft: #eff4ff;
-  --danger: #b42318;
+@import './theme/themes.css';
 
-  --radius: 6px;
+/* ---------------------------------------------------------------------------
+   Structure only. Every colour and font here resolves from a theme token —
+   nothing below names a literal colour. To change how the app looks, edit
+   `theme/themes.css`, not this file.
+   --------------------------------------------------------------------------- */
+
+:root {
   --gap: 12px;
   --side: 340px;
 }
@@ -22,11 +19,26 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family:
-    system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   font-size: 15px;
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
+}
+
+/* Texture sits above the background and below everything else. `none` in
+   themes that do not want it, so this costs nothing when unused. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: var(--overlay);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
 }
 
 img,
@@ -43,15 +55,18 @@ svg {
   padding: 0 16px;
   height: 52px;
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--border-width) solid var(--border);
   flex: 0 0 auto;
 }
 
 .masthead a {
   color: var(--text);
   text-decoration: none;
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  text-transform: var(--display-transform);
+  letter-spacing: var(--display-tracking);
+  font-size: 0.98rem;
   white-space: nowrap;
 }
 
@@ -72,15 +87,11 @@ svg {
   padding: 24px 16px 64px;
 }
 
-/*
- * Mobile first: the workspace is just stacked blocks in normal document flow.
- * The desktop app-shell (fixed viewport height, independently scrolling panes)
- * is layered on at the breakpoint below — trying to run it on a short phone
- * viewport is what made everything collapse into itself.
- */
+/* Mobile first: stacked blocks in normal document flow. The desktop app-shell
+   is layered on at the breakpoint at the bottom of this file. */
 .workspace__side {
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--border-width) solid var(--border);
   padding: 16px;
 }
 
@@ -95,16 +106,21 @@ svg {
 /* --- type ----------------------------------------------------------------- */
 
 h1 {
+  font-family: var(--font-display);
   font-size: 1.4rem;
-  font-weight: 650;
+  font-weight: var(--display-weight);
+  text-transform: var(--display-transform);
+  letter-spacing: var(--display-tracking);
   margin: 0 0 4px;
-  letter-spacing: -0.01em;
   overflow-wrap: break-word;
 }
 
 h2 {
+  font-family: var(--font-display);
   font-size: 1.05rem;
-  font-weight: 600;
+  font-weight: var(--display-weight);
+  text-transform: var(--display-transform);
+  letter-spacing: var(--display-tracking);
   margin: 0 0 10px;
 }
 
@@ -138,8 +154,8 @@ a {
 /* --- cards & forms -------------------------------------------------------- */
 
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  border: var(--border-width) solid var(--border);
   border-radius: var(--radius);
   padding: 14px;
   margin-bottom: 16px;
@@ -157,7 +173,6 @@ a {
   flex-direction: column;
   gap: 5px;
   min-width: 0;
-  /* Grow on small screens so two inputs share a row instead of six cramming. */
   flex: 1 1 7rem;
 }
 
@@ -181,12 +196,12 @@ label {
 
 input,
 select {
-  font: inherit;
+  font-family: var(--font-body);
   /* 16px stops iOS Safari zooming the page when a field is focused. */
   font-size: 16px;
   color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--bg);
+  border: var(--border-width) solid var(--border);
   border-radius: var(--radius);
   padding: 8px 10px;
   width: 100%;
@@ -203,6 +218,7 @@ input[type='file'] {
   border: none;
   padding: 0;
   font-size: 0.82rem;
+  color: var(--text-soft);
 }
 
 input:focus-visible,
@@ -216,37 +232,38 @@ a:focus-visible {
 /* --- buttons -------------------------------------------------------------- */
 
 button {
-  font: inherit;
+  font-family: var(--font-body);
   font-size: 0.875rem;
   font-weight: 500;
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
+  border: var(--border-width) solid var(--border-strong);
+  background: var(--surface-raised);
   color: var(--text);
-  border-radius: var(--radius);
-  /* Comfortable tap target on touch screens. */
+  border-radius: var(--radius-pill);
   padding: 9px 14px;
   cursor: pointer;
   white-space: nowrap;
 }
 
 button:hover:not(:disabled) {
-  background: var(--bg);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 button:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .btn--primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: var(--accent-ink);
 }
 
 .btn--danger {
@@ -257,7 +274,9 @@ button:disabled {
 }
 
 .btn--danger:hover:not(:disabled) {
-  background: #fef3f2;
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 .btn--small {
@@ -283,11 +302,11 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 10px;
-  /* Wrapping is what stops the name, the dimensions and the delete button from
-     piling on top of each other in a narrow column. */
+  /* Wrapping is what stops the name, dimensions and delete button from piling
+     on top of each other in a narrow column. */
   flex-wrap: wrap;
   padding: 10px 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--border-width) solid var(--border);
 }
 
 .item__name {
@@ -300,8 +319,8 @@ button:disabled {
 .swatch {
   width: 24px;
   height: 24px;
-  border-radius: 4px;
-  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  border: var(--border-width) solid var(--border-strong);
   flex: 0 0 auto;
 }
 
@@ -309,8 +328,8 @@ button:disabled {
   width: 36px;
   height: 36px;
   object-fit: cover;
-  border-radius: 4px;
-  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  border: var(--border-width) solid var(--border);
   flex: 0 0 auto;
   background: var(--bg);
 }
@@ -319,7 +338,7 @@ button:disabled {
 
 .stage {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: var(--border-width) solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
   /* On mobile the stage has no parent height to fill, so it sets its own. */
@@ -341,6 +360,13 @@ button:disabled {
   flex: 0 0 auto;
 }
 
+.stagebar strong {
+  font-family: var(--font-display);
+  text-transform: var(--display-transform);
+  letter-spacing: var(--display-tracking);
+  font-weight: var(--display-weight);
+}
+
 .stagebar__spacer {
   flex: 1 1 auto;
 }
@@ -351,9 +377,9 @@ button:disabled {
   gap: 8px;
   flex-wrap: wrap;
   padding: 8px;
-  border: 1px solid var(--border);
+  border: var(--border-width) solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: var(--surface-raised);
   margin-bottom: 8px;
 }
 
@@ -374,16 +400,16 @@ button:disabled {
 .notice {
   padding: 10px 12px;
   border-radius: var(--radius);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  border: var(--border-width) solid var(--border);
   color: var(--text-soft);
   font-size: 0.875rem;
   margin: 12px 0;
 }
 
 .notice--alert {
-  border-color: #f3c6c1;
-  background: #fef3f2;
+  border-color: var(--danger);
+  background: var(--danger-soft);
   color: var(--danger);
 }
 
@@ -391,7 +417,7 @@ button:disabled {
   padding: 32px 16px;
   text-align: center;
   color: var(--text-soft);
-  border: 1px dashed var(--border-strong);
+  border: var(--border-width) dashed var(--border-strong);
   border-radius: var(--radius);
   font-size: 0.9rem;
 }
@@ -399,17 +425,18 @@ button:disabled {
 /* --- sign in -------------------------------------------------------------- */
 
 .gate {
-  max-width: 420px;
+  max-width: 440px;
   margin: 8vh auto;
-  padding: 24px;
+  padding: 28px;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: var(--border-width) solid var(--border);
   border-radius: var(--radius);
 }
 
 .gate h1 {
-  font-size: 1.5rem;
-  margin-bottom: 8px;
+  font-size: 1.9rem;
+  line-height: 1.1;
+  margin-bottom: 10px;
 }
 
 .gate p {
@@ -419,8 +446,8 @@ button:disabled {
 
 /* --- desktop app shell ----------------------------------------------------
    Only above this breakpoint does the layout become a fixed-height shell with
-   independently scrolling panes. Below it, everything above stays in normal
-   document flow and the page scrolls as one.
+   independently scrolling panes. Below it everything stays in normal document
+   flow and the page scrolls as one.
    ------------------------------------------------------------------------- */
 
 @media (min-width: 900px) {
@@ -449,7 +476,7 @@ button:disabled {
   }
 
   .workspace__side {
-    border-right: 1px solid var(--border);
+    border-right: var(--border-width) solid var(--border);
     border-bottom: none;
     padding: 20px;
     overflow-y: auto;
@@ -461,7 +488,6 @@ button:disabled {
   }
 
   .stage {
-    /* Fills the remaining height instead of driving it. */
     flex: 1;
     min-height: 0;
     aspect-ratio: auto;
