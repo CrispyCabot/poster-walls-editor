@@ -18,6 +18,7 @@ import {
   useUploadImage,
 } from '../api/queries.js';
 import { ObstructionForm } from '../components/ObstructionForm.js';
+import { ObstructionRow } from '../components/ObstructionRow.js';
 import { PosterPanel } from '../components/PosterPanel.js';
 import { WallCanvas } from '../components/WallCanvas.js';
 import { WallSettings } from '../components/WallSettings.js';
@@ -349,52 +350,24 @@ function ProjectEditor({ id }: { id: string }) {
                 {active.obstructions.length > 0 && (
                   <ul className="list">
                     {active.obstructions.map((o) => (
-                      <li className="item" key={o.id}>
-                        <span className="item__name">
-                          {o.label || o.kind}
-                          <span className="muted"> · {o.kind}</span>
-                        </span>
-                        {/* Every stored value, not just the size — the offsets
-                            are what you actually measure against on the wall. */}
-                        <dl className="measures">
-                          <div>
-                            <dt>Width</dt>
-                            <dd>{formatLength(o.widthIn, lengthMode)}</dd>
-                          </div>
-                          <div>
-                            <dt>Height</dt>
-                            <dd>{formatLength(o.heightIn, lengthMode)}</dd>
-                          </div>
-                          <div>
-                            <dt>From left</dt>
-                            <dd>{formatLength(o.xIn, lengthMode)}</dd>
-                          </div>
-                          <div>
-                            <dt>From floor</dt>
-                            <dd>{formatLength(o.yIn, lengthMode)}</dd>
-                          </div>
-                          <div>
-                            <dt>Top edge</dt>
-                            <dd>{formatLength(o.yIn + o.heightIn, lengthMode)}</dd>
-                          </div>
-                          <div>
-                            <dt>Right edge</dt>
-                            <dd>{formatLength(o.xIn + o.widthIn, lengthMode)}</dd>
-                          </div>
-                        </dl>
-                        <button
-                          type="button"
-                          className="btn--danger"
-                          aria-label={`Remove ${o.label || o.kind}`}
-                          onClick={() =>
-                            replaceWall({
-                              obstructions: active.obstructions.filter((x) => x.id !== o.id),
-                            })
-                          }
-                        >
-                          ✕
-                        </button>
-                      </li>
+                      <ObstructionRow
+                        key={o.id}
+                        obstruction={o}
+                        wall={active}
+                        lengthMode={lengthMode}
+                        onChange={(next) =>
+                          replaceWall({
+                            obstructions: active.obstructions.map((x) =>
+                              x.id === next.id ? next : x,
+                            ),
+                          })
+                        }
+                        onRemove={() =>
+                          replaceWall({
+                            obstructions: active.obstructions.filter((x) => x.id !== o.id),
+                          })
+                        }
+                      />
                     ))}
                   </ul>
                 )}
