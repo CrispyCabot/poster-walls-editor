@@ -45,13 +45,20 @@ export class WebConstruct extends Construct {
       },
       additionalBehaviors: {
         '/i/*': {
-          // The image pipeline writes uploads/<uuid>/{original,display,thumb}.webp.
-          // originPath rewrites /i/<uuid>/display.webp to the S3 key
-          // uploads/<uuid>/display.webp, matching the pipeline's key layout
-          // and the spec's documented public URL shape.
-          origin: origins.S3BucketOrigin.withOriginAccessControl(this.imagesBucket as s3.IBucket, {
-            originPath: '/uploads',
-          }),
+          // No originPath. CloudFront does NOT strip the matched pattern before
+          // hitting the origin, so `/i/x.jpg` requests the key `i/x.jpg` and
+          // objects are stored under `i/` to match. An earlier `originPath` of
+          // `/uploads` asked S3 for `uploads/i/x.jpg`, which 404'd — and the
+          // SPA error-rewrite below turned that into index.html with a 200, so
+          // images silently rendered as blank frames.
+          //
+          // The `as s3.IBucket` is not redundant: under
+          // `exactOptionalPropertyTypes`, `Bucket.isWebsite` is
+          // `boolean | undefined` while `IBucket` declares plain `boolean`, so
+          // the assignment fails without it.
+          origin: origins.S3BucketOrigin.withOriginAccessControl(
+            this.imagesBucket as s3.IBucket,
+          ),
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
         },

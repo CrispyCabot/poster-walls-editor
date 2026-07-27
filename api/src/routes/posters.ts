@@ -143,7 +143,10 @@ export function registerPosterRoutes(
       s3Client(),
       new PutObjectCommand({
         Bucket: bucket,
-        Key: `uploads/${imageKey}`,
+        // CloudFront serves this behaviour at /i/* and does NOT strip the
+        // matched prefix before hitting S3, so the key must literally start
+        // with i/ for /i/<key> to resolve.
+        Key: `i/${imageKey}`,
         ContentType: body.contentType,
       }),
       { expiresIn: 300 },

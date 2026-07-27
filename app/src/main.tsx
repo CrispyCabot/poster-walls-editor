@@ -6,6 +6,7 @@ import './styles.css';
 import { applyTheme } from './theme/config.js';
 import { AuthProvider } from './auth/AuthProvider.js';
 import { Masthead } from './components/Masthead.js';
+import { RequireAuth } from './components/RequireAuth.js';
 import { Callback } from './routes/Callback.js';
 import { Home } from './routes/Home.js';
 import { Project } from './routes/Project.js';
@@ -37,8 +38,22 @@ createRoot(root).render(
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/callback" element={<Callback />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/projects/:id" element={<Project />} />
+            <Route
+              path="/projects"
+              element={
+                <RequireAuth>
+                  <Projects />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/projects/:id"
+              element={
+                <RequireAuth>
+                  <Project />
+                </RequireAuth>
+              }
+            />
           </Routes>
         </QueryClientProvider>
       </AuthProvider>

@@ -131,28 +131,31 @@ export function PosterPanel({
                     {p.widthIn}" × {p.heightIn}"
                   </span>
                 </span>
-                {/* A label wrapping a hidden input is the accessible way to
-                    style a file picker — clicking the label opens it. */}
-                <label className="btn--small filebtn" htmlFor={`img-${p.id}`}>
-                  {uploadingFor === p.id
-                    ? 'Uploading…'
-                    : p.imageKey === undefined
-                      ? 'Add image'
-                      : 'Replace'}
-                </label>
-                <input
-                  id={`img-${p.id}`}
-                  className="visually-hidden"
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/gif"
-                  disabled={uploadingFor !== null}
-                  onChange={(e) => {
-                    const chosen = e.target.files?.[0];
-                    if (chosen !== undefined) void attachImage(p.id, chosen);
-                    // Reset so picking the same file twice still fires.
-                    e.target.value = '';
-                  }}
-                />
+                                {/* The input lives inside a positioned wrapper. A bare
+                    absolutely-positioned input gets scrolled into view when
+                    focused, which yanked the page down on every upload. */}
+                <span className="filefield">
+                  <label className="btn--small filebtn" htmlFor={`img-${p.id}`}>
+                    {uploadingFor === p.id
+                      ? 'Uploading…'
+                      : p.imageKey === undefined
+                        ? 'Add image'
+                        : 'Replace'}
+                  </label>
+                  <input
+                    id={`img-${p.id}`}
+                    className="filefield__input"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    disabled={uploadingFor !== null}
+                    onChange={(e) => {
+                      const chosen = e.target.files?.[0];
+                      if (chosen !== undefined) void attachImage(p.id, chosen);
+                      // Reset so picking the same file twice still fires.
+                      e.target.value = '';
+                    }}
+                  />
+                </span>
                 <button
                   type="button"
                   className="btn--small"
@@ -230,12 +233,18 @@ export function PosterPanel({
 
           <div className="field field--full">
             <label htmlFor="poster-image">Image (optional)</label>
-            <input
-              id="poster-image"
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            />
+            <span className="filefield filefield--block">
+              <label className="filebtn" htmlFor="poster-image">
+                {file === null ? 'Choose a file' : file.name}
+              </label>
+              <input
+                id="poster-image"
+                className="filefield__input"
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              />
+            </span>
           </div>
 
           <button type="submit" className="btn--primary" disabled={busy || isAdding}>

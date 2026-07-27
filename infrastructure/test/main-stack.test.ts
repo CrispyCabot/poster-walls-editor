@@ -107,11 +107,12 @@ describe('web hosting', () => {
     });
   });
 
-  it('resolves the /i/* behavior to the images bucket under the uploads/ prefix', () => {
-    // The image pipeline writes uploads/<uuid>/{original,display,thumb}.webp.
-    // Without an originPath rewrite, /i/<uuid>/display.webp would map to the
-    // S3 key i/<uuid>/display.webp, which the pipeline never writes to —
-    // every uploaded image would 404 through CloudFront.
+  it('serves /i/* from the images bucket with no origin path rewrite', () => {
+    // CloudFront does NOT strip the matched pattern before hitting the origin,
+    // so `/i/x.jpg` requests the S3 key `i/x.jpg`. An OriginPath of `/uploads`
+    // made it ask for `uploads/i/x.jpg`, which 404'd — and the SPA error
+    // rewrite turned that into index.html with a 200, so every uploaded image
+    // rendered as an empty frame instead of failing loudly.
     const template = synth().toJSON() as {
       Resources: Record<string, { Type: string; Properties: Record<string, unknown> }>;
     };
@@ -130,7 +131,7 @@ describe('web hosting', () => {
 
     const imageOrigin = distConfig.Origins.find((o) => o.Id === imageBehavior!.TargetOriginId);
     expect(imageOrigin).toBeDefined();
-    expect(imageOrigin!.OriginPath).toBe('/uploads');
+    expect(imageOrigin!.OriginPath).toBeUndefined();
   });
 
   it('creates two buckets, both blocking public access', () => {
