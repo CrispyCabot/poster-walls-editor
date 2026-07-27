@@ -212,7 +212,7 @@ export function Project() {
                 onChange={(e) => replaceWall({ backgroundColor: e.target.value })}
               />
 
-              <span style={{ flex: 1 }} />
+              <span className="stagebar__spacer" />
 
               <button
                 type="button"

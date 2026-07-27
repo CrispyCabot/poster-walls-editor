@@ -11,16 +11,11 @@
 
   --radius: 6px;
   --gap: 12px;
+  --side: 340px;
 }
 
 * {
   box-sizing: border-box;
-}
-
-html,
-body,
-#root {
-  height: 100%;
 }
 
 body {
@@ -31,11 +26,12 @@ body {
     system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: 15px;
   line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
 }
 
-#root {
-  display: flex;
-  flex-direction: column;
+img,
+svg {
+  max-width: 100%;
 }
 
 /* --- header --------------------------------------------------------------- */
@@ -43,9 +39,9 @@ body {
 .masthead {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 0 24px;
-  height: 56px;
+  gap: 16px;
+  padding: 0 16px;
+  height: 52px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   flex: 0 0 auto;
@@ -56,6 +52,7 @@ body {
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
+  white-space: nowrap;
 }
 
 .masthead a:hover {
@@ -68,54 +65,41 @@ body {
 
 /* --- page shells ---------------------------------------------------------- */
 
-/* Narrow, centred: lists and forms. */
 .page {
   width: 100%;
   max-width: 900px;
   margin: 0 auto;
-  padding: 32px 24px 64px;
+  padding: 24px 16px 64px;
 }
 
-/* Full-bleed: the wall editor, which should own the screen. */
-.workspace {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 340px 1fr;
-  min-height: 0;
-}
-
+/*
+ * Mobile first: the workspace is just stacked blocks in normal document flow.
+ * The desktop app-shell (fixed viewport height, independently scrolling panes)
+ * is layered on at the breakpoint below — trying to run it on a short phone
+ * viewport is what made everything collapse into itself.
+ */
 .workspace__side {
-  border-right: 1px solid var(--border);
   background: var(--surface);
-  padding: 20px;
-  overflow-y: auto;
+  border-bottom: 1px solid var(--border);
+  padding: 16px;
 }
 
 .workspace__main {
   display: flex;
   flex-direction: column;
-  min-width: 0;
-  padding: 20px 24px 24px;
   gap: 12px;
-}
-
-@media (max-width: 900px) {
-  .workspace {
-    grid-template-columns: 1fr;
-  }
-  .workspace__side {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
+  padding: 16px;
+  min-width: 0;
 }
 
 /* --- type ----------------------------------------------------------------- */
 
 h1 {
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   font-weight: 650;
   margin: 0 0 4px;
   letter-spacing: -0.01em;
+  overflow-wrap: break-word;
 }
 
 h2 {
@@ -146,9 +130,9 @@ a {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 /* --- cards & forms -------------------------------------------------------- */
@@ -157,8 +141,8 @@ a {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px;
-  margin-bottom: 20px;
+  padding: 14px;
+  margin-bottom: 16px;
 }
 
 .fields {
@@ -173,15 +157,16 @@ a {
   flex-direction: column;
   gap: 5px;
   min-width: 0;
-  flex: 1 1 8rem;
+  /* Grow on small screens so two inputs share a row instead of six cramming. */
+  flex: 1 1 7rem;
 }
 
 .field--wide {
-  flex: 2 1 12rem;
+  flex: 2 1 10rem;
 }
 
 .field--num {
-  flex: 0 1 5.5rem;
+  flex: 1 1 5rem;
 }
 
 .field--full {
@@ -197,7 +182,8 @@ label {
 input,
 select {
   font: inherit;
-  font-size: 0.9rem;
+  /* 16px stops iOS Safari zooming the page when a field is focused. */
+  font-size: 16px;
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -209,7 +195,7 @@ select {
 
 input[type='color'] {
   padding: 3px;
-  height: 36px;
+  height: 38px;
   cursor: pointer;
 }
 
@@ -237,8 +223,10 @@ button {
   background: var(--surface);
   color: var(--text);
   border-radius: var(--radius);
-  padding: 8px 14px;
+  /* Comfortable tap target on touch screens. */
+  padding: 9px 14px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 button:hover:not(:disabled) {
@@ -264,7 +252,7 @@ button:disabled {
 .btn--danger {
   border-color: var(--border);
   color: var(--danger);
-  padding: 5px 10px;
+  padding: 7px 11px;
   font-size: 0.8rem;
 }
 
@@ -273,7 +261,7 @@ button:disabled {
 }
 
 .btn--small {
-  padding: 5px 10px;
+  padding: 7px 11px;
   font-size: 0.8rem;
 }
 
@@ -295,30 +283,31 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 10px;
+  /* Wrapping is what stops the name, the dimensions and the delete button from
+     piling on top of each other in a narrow column. */
+  flex-wrap: wrap;
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
 }
 
 .item__name {
-  flex: 1;
+  flex: 1 1 8rem;
   min-width: 0;
   font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
 }
 
 .swatch {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 4px;
   border: 1px solid var(--border-strong);
   flex: 0 0 auto;
 }
 
 .thumb {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   object-fit: cover;
   border-radius: 4px;
   border: 1px solid var(--border);
@@ -329,21 +318,19 @@ button:disabled {
 /* --- wall stage ----------------------------------------------------------- */
 
 .stage {
-  flex: 1;
-  min-height: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   overflow: hidden;
+  /* On mobile the stage has no parent height to fill, so it sets its own. */
+  aspect-ratio: 14 / 9;
+  min-height: 220px;
 }
 
 .stage svg {
   display: block;
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
 }
 
 .stagebar {
@@ -354,33 +341,32 @@ button:disabled {
   flex: 0 0 auto;
 }
 
+.stagebar__spacer {
+  flex: 1 1 auto;
+}
+
 .poster-chip {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
   padding: 8px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
-  cursor: grab;
   margin-bottom: 8px;
 }
 
-.poster-chip:active {
-  cursor: grabbing;
-}
-
 .poster-chip__meta {
-  flex: 1;
+  flex: 1 1 6rem;
   min-width: 0;
 }
 
 .poster-chip__name {
+  display: block;
   font-weight: 500;
   font-size: 0.9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
 }
 
 /* --- states --------------------------------------------------------------- */
@@ -414,8 +400,8 @@ button:disabled {
 
 .gate {
   max-width: 420px;
-  margin: 12vh auto;
-  padding: 32px;
+  margin: 8vh auto;
+  padding: 24px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -429,6 +415,82 @@ button:disabled {
 .gate p {
   color: var(--text-soft);
   margin: 0 0 24px;
+}
+
+/* --- desktop app shell ----------------------------------------------------
+   Only above this breakpoint does the layout become a fixed-height shell with
+   independently scrolling panes. Below it, everything above stays in normal
+   document flow and the page scrolls as one.
+   ------------------------------------------------------------------------- */
+
+@media (min-width: 900px) {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  #root {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .masthead {
+    padding: 0 24px;
+    height: 56px;
+    gap: 20px;
+  }
+
+  .workspace {
+    flex: 1;
+    display: grid;
+    grid-template-columns: var(--side) 1fr;
+    min-height: 0;
+  }
+
+  .workspace__side {
+    border-right: 1px solid var(--border);
+    border-bottom: none;
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  .workspace__main {
+    padding: 20px 24px 24px;
+    min-height: 0;
+  }
+
+  .stage {
+    /* Fills the remaining height instead of driving it. */
+    flex: 1;
+    min-height: 0;
+    aspect-ratio: auto;
+  }
+
+  .page {
+    padding: 32px 24px 64px;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+  }
+
+  input,
+  select {
+    font-size: 0.9rem;
+  }
+
+  .field {
+    flex: 1 1 8rem;
+  }
+
+  .field--num {
+    flex: 0 1 5.5rem;
+  }
+
+  .item {
+    flex-wrap: nowrap;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

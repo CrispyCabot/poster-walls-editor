@@ -50,14 +50,21 @@ export function WallCanvas({
 
   const byId = new Map(posters.map((p) => [p.id, p]));
 
-  /** Pointer position in wall inches, accounting for CSS scaling of the SVG. */
+  /**
+   * Pointer position in wall inches.
+   *
+   * Uses the SVG's own screen matrix rather than measuring the bounding box.
+   * The element is sized by CSS while the drawing is sized by the viewBox, so
+   * `preserveAspectRatio` letterboxes whenever those two ratios differ — which
+   * they do on almost every mobile viewport. A linear rect-based mapping would
+   * silently drift by the size of the letterbox; the matrix accounts for it.
+   */
   function pointerToWall(e: React.PointerEvent): { x: number; y: number } {
     const svg = svgRef.current;
-    if (svg === null) return { x: 0, y: 0 };
-    const rect = svg.getBoundingClientRect();
-    const px = ((e.clientX - rect.left) / rect.width) * viewport.width;
-    const py = ((e.clientY - rect.top) / rect.height) * viewport.height;
-    return screenToWall({ x: px, y: py }, size, fit);
+    const ctm = svg?.getScreenCTM();
+    if (svg === null || ctm === null || ctm === undefined) return { x: 0, y: 0 };
+    const point = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
+    return screenToWall({ x: point.x, y: point.y }, size, fit);
   }
 
   function clamp(placement: Placement, poster: Poster): Placement {
