@@ -78,3 +78,17 @@ export type CreateProject = z.infer<typeof CreateProjectSchema>;
  * default exists to serve.
  */
 export type CreateProjectInput = z.input<typeof CreateProjectSchema>;
+
+export const UpdateProjectSchema = z.object({
+  name: z.string().min(1).max(200),
+  visibility: VisibilitySchema,
+  /** The version the client last read. A mismatch means someone else wrote. */
+  version: z.number().int().nonnegative(),
+});
+export type UpdateProject = z.infer<typeof UpdateProjectSchema>;
+
+/** Wall as submitted by a client; the server assigns the id. */
+export const CreateWallSchema = WallSchema.omit({ id: true });
+export type CreateWall = z.infer<typeof CreateWallSchema>;
+/** `obstructions` carries a .default([]), so construction needs the input type. */
+export type CreateWallInput = z.input<typeof CreateWallSchema>;

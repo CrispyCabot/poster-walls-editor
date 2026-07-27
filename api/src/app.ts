@@ -2,10 +2,15 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { type AuthedEnv, cognitoVerifier, createAuthMiddleware, type TokenVerifier } from './auth.js';
 import { errorHandler, notFound } from './errors.js';
+import { type ProjectDb, defaultProjectDb, registerProjectRoutes } from './routes/projects.js';
+import { type WallDb, defaultWallDb, registerWallRoutes } from './routes/walls.js';
 
 export interface AppDeps {
   /** Injected by tests; production builds the Cognito verifier lazily. */
   verify?: TokenVerifier;
+  /** Injected by tests so routes run without AWS. */
+  db?: ProjectDb;
+  wallDb?: WallDb;
 }
 
 // `AuthedEnv` types `c.get('user')` on routes behind `requireAuth`. `/health`
@@ -15,10 +20,10 @@ export function createApp(deps: AppDeps = {}): Hono<AuthedEnv> {
   const app = new Hono<AuthedEnv>();
 
   // Tokens are bearer, not cookies, so a permissive reflection is safe here.
-  // Task 9 narrows this to the deployed web origin via the WEB_ORIGIN env var.
+  // WEB_ORIGIN pins this to the deployed site in production.
   app.use('*', cors({
     origin: (origin) => process.env.WEB_ORIGIN ?? origin,
-    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Authorization', 'Content-Type'],
   }));
 
@@ -30,6 +35,9 @@ export function createApp(deps: AppDeps = {}): Hono<AuthedEnv> {
     const { sub, username } = c.get('user');
     return c.json({ sub, username });
   });
+
+  registerProjectRoutes(app, requireAuth, deps.db ?? defaultProjectDb);
+  registerWallRoutes(app, requireAuth, deps.wallDb ?? defaultWallDb);
 
   app.notFound(notFound);
   app.onError(errorHandler);

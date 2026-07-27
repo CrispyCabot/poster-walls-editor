@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { useAuth } from '../auth/AuthProvider.js';
 import { getConfig } from '../config.js';
 
@@ -41,6 +42,7 @@ export function Home() {
       <p>Signed in as {user?.profile.email}</p>
       {meError !== null && <p role="alert">API check failed: {meError}</p>}
       {me !== null && <p>API confirmed identity: {me.username}</p>}
+      <p><Link to="/projects">Your projects</Link></p>
       <button onClick={() => void signOut()}>Sign out</button>
     </main>
   );
