@@ -216,9 +216,66 @@ export function sharePk(token: string): string {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run --project node packages/shared`
-Expected: PASS — 6 new tests, 23 in `packages/shared` total.
+Expected: PASS — 8 new tests, 25 in `packages/shared` total.
 
-- [ ] **Step 5: Export and commit**
+- [ ] **Step 5: Stop `#` from reaching a key builder**
+
+`layoutSk(wallId, layoutId)` joins two caller-supplied segments with `#`, so
+`layoutSk('a#b', 'c')` and `layoutSk('a', 'b#c')` both yield `LAYOUT#a#b#c` —
+two logically different layouts addressing the same item. `IdSchema` currently
+allows any character, so that collision is reachable once route parameters flow
+into these builders.
+
+It is not a privilege-escalation path: single-segment builders like
+`projectPk` cannot forge another legitimate key, and the ambiguity is confined
+to a partition the caller can already write. But it is silent data aliasing,
+and it costs one line to remove the class entirely.
+
+Replace `IdSchema` in `packages/shared/src/ids.ts` with:
+
+```ts
+import { z } from 'zod';
+
+/**
+ * IDs are opaque strings generated with `crypto.randomUUID()`.
+ *
+ * `#` is excluded deliberately: it is the key-segment separator, and
+ * `layoutSk` joins two segments with it, so an id containing `#` would let two
+ * different (wallId, layoutId) pairs address one item.
+ */
+export const IdSchema = z
+  .string()
+  .min(1)
+  .max(64)
+  .regex(/^[A-Za-z0-9_-]+$/, 'must contain only letters, digits, hyphen, or underscore');
+```
+
+Add to `packages/shared/src/schemas.test.ts`:
+
+```ts
+describe('IdSchema', () => {
+  it('accepts a uuid', () => {
+    expect(() =>
+      PosterSchema.parse({
+        id: '9f2a4c1e-7b33-4d0a-9e51-2c8f1b6d4a70',
+        name: 'Akira', widthIn: 24, heightIn: 36,
+      }),
+    ).not.toThrow();
+  });
+
+  it('rejects an id containing the key separator', () => {
+    // `#` separates key segments, so allowing it lets two different
+    // (wallId, layoutId) pairs resolve to the same LAYOUT# item.
+    expect(() =>
+      PosterSchema.parse({
+        id: 'a#b', name: 'Akira', widthIn: 24, heightIn: 36,
+      }),
+    ).toThrow();
+  });
+});
+```
+
+- [ ] **Step 6: Export and commit**
 
 Add to `packages/shared/src/index.ts`:
 
