@@ -17,6 +17,7 @@ import {
   useUpdateWall,
   useUploadImage,
 } from '../api/queries.js';
+import { EditableName } from '../components/EditableName.js';
 import { ObstructionForm } from '../components/ObstructionForm.js';
 import { ObstructionRow } from '../components/ObstructionRow.js';
 import { PosterPanel } from '../components/PosterPanel.js';
@@ -122,7 +123,25 @@ function ProjectEditor({ id }: { id: string }) {
         <p style={{ marginTop: 0 }}>
           <Link to="/projects">← All projects</Link>
         </p>
-        <h1>{data?.project.name}</h1>
+        {data !== undefined && (
+          <EditableName
+            ariaLabel="Project name"
+            value={data.project.name}
+            isSaving={updateProject.isPending}
+            error={
+              updateProject.error === null
+                ? null
+                : `Could not rename. ${(updateProject.error as Error).message}`
+            }
+            onSave={(name) =>
+              updateProject.mutate({
+                name,
+                visibility: data.project.visibility,
+                version: data.project.version,
+              })
+            }
+          />
+        )}
 
         <h3 style={{ marginTop: 20 }}>Walls</h3>
         {walls.length === 0 ? (

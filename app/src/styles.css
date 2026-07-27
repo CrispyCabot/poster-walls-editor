@@ -764,3 +764,34 @@ button:disabled {
 .measures dt label {
   cursor: pointer;
 }
+
+/* An input that reads as the heading it replaces. Still a real field, so it
+   keeps keyboard access and screen-reader semantics. */
+.editablename {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: var(--display-weight);
+  text-transform: var(--display-transform);
+  letter-spacing: var(--display-tracking);
+  color: var(--text);
+  background: transparent;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius);
+  padding: 2px 6px;
+  margin: 0 0 4px -6px;
+  width: calc(100% + 6px);
+}
+
+.editablename:hover:not(:disabled) {
+  border-color: var(--border);
+}
+
+.editablename:focus {
+  background: var(--bg);
+  border-color: var(--accent);
+  outline: none;
+}
+
+.editablename:disabled {
+  opacity: 0.6;
+}
