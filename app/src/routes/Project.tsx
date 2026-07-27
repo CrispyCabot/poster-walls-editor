@@ -9,6 +9,7 @@ import {
   usePlacements,
   usePosters,
   useProject,
+  useProjectView,
   useRemoveWall,
   useSavePlacements,
   useUpdatePoster,
@@ -19,12 +20,32 @@ import {
 import { ObstructionForm } from '../components/ObstructionForm.js';
 import { PosterPanel } from '../components/PosterPanel.js';
 import { WallCanvas } from '../components/WallCanvas.js';
+import { ProjectViewer } from './ProjectViewer.js';
 
 /** Large fixed drawing surface; CSS scales it down to fit the stage. */
 const VIEWPORT = { width: 1400, height: 900, padding: 40 };
 
 export function Project() {
   const { id = '' } = useParams();
+  const view = useProjectView(id);
+
+  // One read decides everything: owners get the editor, everyone else gets the
+  // read-only viewer, and a project that is neither theirs nor public 404s.
+  if (view.isLoading) return <p className="notice">Loading project…</p>;
+  if (view.error !== null) {
+    return (
+      <p className="notice notice--alert" role="alert">
+        Could not open this project. {(view.error as Error).message}
+      </p>
+    );
+  }
+  if (view.data === undefined) return <p className="notice">Loading project…</p>;
+  if (!view.data.isOwner) return <ProjectViewer view={view.data} />;
+
+  return <ProjectEditor id={id} />;
+}
+
+function ProjectEditor({ id }: { id: string }) {
   const { data, isLoading, error } = useProject(id);
 
   const [selected, setSelected] = useState<string | null>(null);

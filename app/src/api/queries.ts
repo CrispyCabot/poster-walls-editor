@@ -301,3 +301,35 @@ export function useUpdateProject(projectId: string) {
     },
   });
 }
+
+export interface ProjectView {
+  project: { id: string; name: string; visibility: 'private' | 'public'; updatedAt: string };
+  walls: Wall[];
+  posters: Poster[];
+  placementsByWall: Record<string, Placement[]>;
+  isOwner: boolean;
+}
+
+/**
+ * Loads a project for whoever is looking.
+ *
+ * Sends the token when there is one, and works without it — a public project
+ * opens for signed-out visitors too. `isOwner` in the response is what decides
+ * whether the page offers any editing.
+ */
+export function useProjectView(id: string) {
+  const token = useToken();
+  return useQuery({
+    queryKey: ['projects', id, 'view', token === null ? 'anon' : 'auth'] as const,
+    enabled: id !== '',
+    queryFn: async () => {
+      const res = await fetch(`${getConfig().apiUrl}/projects/${id}/view`, {
+        headers: token === null ? {} : { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        throw new Error(res.status === 404 ? 'Not found' : `Failed with ${res.status}`);
+      }
+      return (await res.json()) as ProjectView;
+    },
+  });
+}

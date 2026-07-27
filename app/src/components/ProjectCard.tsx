@@ -1,9 +1,16 @@
 import { fitToViewport, outerSize, wallToScreen } from '@pwe/layout-engine';
-import type { ProjectPreview } from '@pwe/shared';
+import type { Obstruction, ProjectPreview } from '@pwe/shared';
 import { Link } from 'react-router';
 import { getConfig } from '../config.js';
 
 const THUMB = { width: 320, height: 200, padding: 10 };
+
+const OBSTRUCTION_FILL: Record<Obstruction['kind'], string> = {
+  door: 'var(--obstruction-door)',
+  window: 'var(--obstruction-window)',
+  outlet: 'var(--obstruction-outlet)',
+  generic: 'var(--obstruction-generic)',
+};
 
 /**
  * A small, non-interactive rendering of a project's first wall.
@@ -40,6 +47,24 @@ function Thumbnail({ preview }: { preview: ProjectPreview }) {
         stroke="var(--canvas-edge)"
         strokeWidth={1}
       />
+
+      {/* Obstructions first, so posters sit on top of them as they do on the
+          real wall. Omitting these made a wall with a door look empty. */}
+      {wall.obstructions.map((o) => {
+        const corner = wallToScreen({ x: o.xIn, y: o.yIn + o.heightIn }, size, fit);
+        return (
+          <rect
+            key={o.id}
+            x={corner.x}
+            y={corner.y}
+            width={o.widthIn * fit.scale}
+            height={o.heightIn * fit.scale}
+            fill={OBSTRUCTION_FILL[o.kind]}
+            stroke="var(--obstruction-edge)"
+            strokeWidth={0.5}
+          />
+        );
+      })}
 
       {preview.placements.map((placement) => {
         const poster = byId.get(placement.posterId);

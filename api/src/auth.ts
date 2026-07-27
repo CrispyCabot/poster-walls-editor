@@ -67,3 +67,26 @@ export function cognitoVerifier(): TokenVerifier {
     return { sub: payload.sub, username: String(payload.username) };
   };
 }
+
+/**
+ * Attaches the caller when a valid token is present, and continues when it is
+ * not.
+ *
+ * Used by routes that serve both signed-in and anonymous visitors — a public
+ * project is readable by anyone, but the owner needs to be recognised so the
+ * response can say whether they may edit it.
+ */
+export function createOptionalAuthMiddleware(verify: TokenVerifier) {
+  return createMiddleware<AuthedEnv>(async (c, next) => {
+    const header = c.req.header('Authorization');
+    if (header !== undefined && header.startsWith('Bearer ')) {
+      try {
+        c.set('user', await verify(header.slice('Bearer '.length)));
+      } catch {
+        // An unreadable token is treated as anonymous rather than an error:
+        // this route works fine without one.
+      }
+    }
+    await next();
+  });
+}

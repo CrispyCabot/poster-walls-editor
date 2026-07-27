@@ -658,3 +658,40 @@ button:disabled {
   border-top: var(--border-width) solid var(--border);
   margin: 32px 0;
 }
+
+/* Section links that read as an action rather than body-copy hyperlinks. */
+.pagehead a {
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-soft);
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+.pagehead a:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.projectcard__link,
+.projectcard__name {
+  text-decoration: none;
+}
+
+/* Read-only banner shown when viewing somebody else's public wall. */
+.viewingbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border: var(--border-width) solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  font-size: 0.85rem;
+  color: var(--text-soft);
+}

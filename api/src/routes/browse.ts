@@ -1,15 +1,22 @@
 import type { Hono, MiddlewareHandler } from 'hono';
 import type { AuthedEnv } from '../auth.js';
-import { browsePublic, previewsFor } from '../db/previews.js';
+import { ApiError } from '../errors.js';
+import { browsePublic, previewsFor, viewProject } from '../db/previews.js';
 import { listProjects } from '../db/projects.js';
 
 export interface BrowseDb {
   browsePublic: typeof browsePublic;
   previewsFor: typeof previewsFor;
   listProjects: typeof listProjects;
+  viewProject: typeof viewProject;
 }
 
-export const defaultBrowseDb: BrowseDb = { browsePublic, previewsFor, listProjects };
+export const defaultBrowseDb: BrowseDb = {
+  browsePublic,
+  previewsFor,
+  listProjects,
+  viewProject,
+};
 
 /** Parses a query param as a positive number, or undefined when absent/bad. */
 function num(raw: string | undefined): number | undefined {
@@ -21,8 +28,23 @@ function num(raw: string | undefined): number | undefined {
 export function registerBrowseRoutes(
   app: Hono<AuthedEnv>,
   requireAuth: MiddlewareHandler,
+  optionalAuth: MiddlewareHandler,
   db: BrowseDb,
 ): void {
+  /**
+   * Everything needed to render a project, for whoever is looking.
+   *
+   * Optional auth rather than required: a public project is readable by anyone,
+   * including signed-out visitors, and the response reports whether the caller
+   * owns it so the client knows to offer editing.
+   */
+  app.get('/projects/:id/view', optionalAuth, async (c) => {
+    const viewer = c.get('user') as { sub: string } | undefined;
+    const view = await db.viewProject(c.req.param('id'), viewer?.sub ?? null);
+    if (view === null) throw new ApiError(404, 'not_found', 'Not found');
+    return c.json(view);
+  });
+
   /**
    * The signed-in user's projects, with enough data to draw a thumbnail.
    *

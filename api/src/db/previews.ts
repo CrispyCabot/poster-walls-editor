@@ -167,3 +167,76 @@ export async function browsePublic(
     truncated: result.LastEvaluatedKey !== undefined,
   };
 }
+
+export interface ProjectView {
+  project: { id: string; name: string; visibility: 'private' | 'public'; updatedAt: string };
+  walls: Wall[];
+  posters: Poster[];
+  placementsByWall: Record<string, Placement[]>;
+  /** Drives whether the client offers any editing at all. */
+  isOwner: boolean;
+}
+
+/**
+ * Reads a project for whoever is looking at it.
+ *
+ * The owner always sees theirs. Anyone else — including a signed-out visitor —
+ * sees it only if it is public. Returns null for "no such project" and "not
+ * yours and not public" alike, so the route cannot leak which it was.
+ */
+export async function viewProject(
+  projectId: string,
+  viewerId: string | null,
+): Promise<ProjectView | null> {
+  const result = await docClient().send(
+    new QueryCommand({
+      TableName: tableName(),
+      KeyConditionExpression: 'PK = :pk',
+      ExpressionAttributeValues: { ':pk': projectPk(projectId) },
+    }),
+  );
+
+  const items = result.Items ?? [];
+  const meta = items.find((i) => i.SK === META);
+  if (meta === undefined) return null;
+
+  const isOwner = viewerId !== null && meta.ownerId === viewerId;
+  if (!isOwner && meta.visibility !== 'public') return null;
+
+  const preview = toPreview(items);
+  if (preview === null) return null;
+
+  const walls: Wall[] = items
+    .filter((i) => String(i.SK).startsWith(WALL_SK_PREFIX))
+    .map((i) => ({
+      id: String(i.id),
+      name: String(i.name),
+      widthIn: Number(i.widthIn),
+      heightIn: Number(i.heightIn),
+      obstructions: (i.obstructions ?? []) as Wall['obstructions'],
+      backgroundColor: String(i.backgroundColor ?? '#FFFFFF'),
+    }));
+
+  const placementsByWall: Record<string, Placement[]> = {};
+  for (const item of items) {
+    const sk = String(item.SK);
+    if (!sk.startsWith('LAYOUT#')) continue;
+    const wallId = sk.split('#')[1];
+    if (wallId !== undefined) {
+      placementsByWall[wallId] = (item.placements ?? []) as Placement[];
+    }
+  }
+
+  return {
+    project: {
+      id: preview.id,
+      name: preview.name,
+      visibility: preview.visibility,
+      updatedAt: preview.updatedAt,
+    },
+    walls,
+    posters: preview.posters,
+    placementsByWall,
+    isOwner,
+  };
+}

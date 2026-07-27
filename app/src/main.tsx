@@ -46,14 +46,9 @@ createRoot(root).render(
                 </RequireAuth>
               }
             />
-            <Route
-              path="/projects/:id"
-              element={
-                <RequireAuth>
-                  <Project />
-                </RequireAuth>
-              }
-            />
+            {/* Not gated: public projects open for signed-out visitors. The
+                page reads isOwner from the API and offers editing only then. */}
+            <Route path="/projects/:id" element={<Project />} />
           </Routes>
         </QueryClientProvider>
       </AuthProvider>
