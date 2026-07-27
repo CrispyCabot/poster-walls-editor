@@ -1,4 +1,4 @@
-import type { LengthMode } from '@pwe/layout-engine';
+import { type LengthMode, formatLength } from '@pwe/layout-engine';
 import type { Obstruction } from '@pwe/shared';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
@@ -11,7 +11,7 @@ import {
 import { ObstructionForm } from '../components/ObstructionForm.js';
 import { WallCanvas } from '../components/WallCanvas.js';
 
-const VIEWPORT = { width: 720, height: 480, padding: 32 };
+const VIEWPORT = { width: 760, height: 460, padding: 48 };
 
 export function Project() {
   const { id = '' } = useParams();
@@ -26,9 +26,13 @@ export function Project() {
   const [selected, setSelected] = useState<string | null>(null);
   const [lengthMode, setLengthMode] = useState<LengthMode>('inches');
 
-  if (isLoading) return <p>Loading project…</p>;
+  if (isLoading) return <p className="notice">Loading project…</p>;
   if (error) {
-    return <p role="alert">Could not load this project: {(error as Error).message}</p>;
+    return (
+      <p className="notice notice--alert" role="alert">
+        Could not load this project. {(error as Error).message}
+      </p>
+    );
   }
 
   const walls = data?.walls ?? [];
@@ -49,18 +53,21 @@ export function Project() {
   };
 
   return (
-    <main>
-      <p><Link to="/projects">All projects</Link></p>
-      <h1>{data?.project.name}</h1>
-
-      <button
-        type="button"
-        onClick={() => setLengthMode(lengthMode === 'inches' ? 'feet-inches' : 'inches')}
-      >
-        Show {lengthMode === 'inches' ? 'feet and inches' : 'inches'}
-      </button>
+    <div className="sheet">
+      <div className="titleblock">
+        <div>
+          <span className="eyebrow">
+            <Link to="/projects">← All projects</Link>
+          </span>
+          <h1>{data?.project.name}</h1>
+        </div>
+        <span className="meta">
+          {walls.length} {walls.length === 1 ? 'wall' : 'walls'}
+        </span>
+      </div>
 
       <form
+        className="panel"
         onSubmit={(e) => {
           e.preventDefault();
           const w = Number(widthIn);
@@ -70,29 +77,57 @@ export function Project() {
           setName('');
         }}
       >
-        <h3>Add a wall</h3>
-        <label htmlFor="wall-name">Wall name</label>
-        <input id="wall-name" value={name} onChange={(e) => setName(e.target.value)} />
-
-        <label htmlFor="wall-width">Width (inches)</label>
-        <input id="wall-width" value={widthIn} onChange={(e) => setWidthIn(e.target.value)} />
-
-        <label htmlFor="wall-height">Height (inches)</label>
-        <input id="wall-height" value={heightIn} onChange={(e) => setHeightIn(e.target.value)} />
-
-        <button type="submit" disabled={addWall.isPending}>Add wall</button>
+        <h3>Measure a wall</h3>
+        <div className="fields">
+          <div className="field field--grow">
+            <label htmlFor="wall-name">Wall</label>
+            <input
+              id="wall-name"
+              value={name}
+              placeholder="North wall"
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div className="field field--num">
+            <label htmlFor="wall-width">Width (in)</label>
+            <input id="wall-width" value={widthIn} onChange={(e) => setWidthIn(e.target.value)} />
+          </div>
+          <div className="field field--num">
+            <label htmlFor="wall-height">Height (in)</label>
+            <input id="wall-height" value={heightIn} onChange={(e) => setHeightIn(e.target.value)} />
+          </div>
+          <button type="submit" className="btn--primary" disabled={addWall.isPending}>
+            {addWall.isPending ? 'Adding' : 'Add wall'}
+          </button>
+        </div>
       </form>
 
       {walls.length === 0 ? (
-        <p>No walls yet. Add one above.</p>
+        <div className="empty">
+          <strong>No walls yet</strong>
+          Measure a wall above and it will be drawn to scale.
+        </div>
       ) : (
         <>
-          <ul>
+          <ul className="stack">
             {walls.map((w) => (
-              <li key={w.id}>
-                <button type="button" onClick={() => setSelected(w.id)}>{w.name}</button>{' '}
+              <li className="row" key={w.id}>
+                <span className="row__name">
+                  <button
+                    type="button"
+                    className="btn--tab"
+                    aria-pressed={active?.id === w.id}
+                    onClick={() => setSelected(w.id)}
+                  >
+                    {w.name}
+                  </button>
+                </span>
+                <span className="meta">
+                  {formatLength(w.widthIn, lengthMode)} × {formatLength(w.heightIn, lengthMode)}
+                </span>
                 <button
                   type="button"
+                  className="btn--quiet"
                   aria-label={`Delete ${w.name}`}
                   onClick={() => removeWall.mutate(w.id)}
                 >
@@ -104,7 +139,20 @@ export function Project() {
 
           {active !== undefined && (
             <>
-              <WallCanvas wall={active} viewport={VIEWPORT} lengthMode={lengthMode} />
+              <div className="drawing">
+                <WallCanvas wall={active} viewport={VIEWPORT} lengthMode={lengthMode} />
+              </div>
+
+              <button
+                type="button"
+                className="btn--tab"
+                aria-pressed={lengthMode === 'feet-inches'}
+                onClick={() =>
+                  setLengthMode(lengthMode === 'inches' ? 'feet-inches' : 'inches')
+                }
+              >
+                {lengthMode === 'inches' ? 'Show feet and inches' : 'Show inches'}
+              </button>
 
               <ObstructionForm
                 wall={active}
@@ -114,13 +162,21 @@ export function Project() {
               />
 
               {active.obstructions.length > 0 && (
-                <ul>
+                <ul className="stack">
                   {active.obstructions.map((o) => (
-                    <li key={o.id}>
-                      {o.kind}: {o.label || '(unlabelled)'}{' '}
+                    <li className="row" key={o.id}>
+                      <span className="row__index">{o.kind}</span>
+                      <span className="row__name">{o.label || 'Unlabelled'}</span>
+                      <span className="meta">
+                        {formatLength(o.widthIn, lengthMode)} × {formatLength(o.heightIn, lengthMode)}
+                        {' · '}
+                        {formatLength(o.xIn, lengthMode)} from left,{' '}
+                        {formatLength(o.yIn, lengthMode)} up
+                      </span>
                       <button
                         type="button"
-                        aria-label={`Remove ${o.label}`}
+                        className="btn--quiet"
+                        aria-label={`Remove ${o.label || o.kind}`}
                         onClick={() =>
                           replaceObstructions(
                             active.obstructions.filter((x) => x.id !== o.id),
@@ -137,6 +193,6 @@ export function Project() {
           )}
         </>
       )}
-    </main>
+    </div>
   );
 }

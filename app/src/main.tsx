@@ -2,7 +2,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router';
+import './styles.css';
 import { AuthProvider } from './auth/AuthProvider.js';
+import { Masthead } from './components/Masthead.js';
 import { Callback } from './routes/Callback.js';
 import { Home } from './routes/Home.js';
 import { Project } from './routes/Project.js';
@@ -27,6 +29,7 @@ createRoot(root).render(
     <BrowserRouter>
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
+          <Masthead />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/callback" element={<Callback />} />

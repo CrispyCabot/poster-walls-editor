@@ -8,9 +8,9 @@ export function Callback() {
   useEffect(() => {
     userManager
       .signinRedirectCallback()
-      .then(() => navigate('/', { replace: true }))
+      .then(() => navigate('/projects', { replace: true }))
       .catch(() => navigate('/', { replace: true }));
   }, [navigate]);
 
-  return <p>Signing you in…</p>;
+  return <p className="notice">Signing you in…</p>;
 }

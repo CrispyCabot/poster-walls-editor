@@ -16,13 +16,18 @@ export default defineConfig({
           include: ['{packages,api,infrastructure}/**/*.test.{ts,tsx}'],
           environment: 'node',
           // infrastructure tests call synth(), which triggers synchronous esbuild
-          // bundling of every NodejsFunction on each call. On a cold cache (every
-          // GitHub Actions runner, always) this can exceed vitest's 5000ms default,
-          // as measured locally (5057ms). 20s gives ample headroom without masking
-          // a genuinely hung test. Inline projects do not inherit root-level test
-          // options implicitly, so this must be set here explicitly rather than
-          // relying on the (now removed) root-level testTimeout.
-          testTimeout: 20000,
+          // bundling of every NodejsFunction. Each test file memoizes its
+          // Template so this happens once per file rather than once per test,
+          // but the first test still pays the whole cold-cache cost — measured
+          // at 52s on a OneDrive-backed working copy, where every file esbuild
+          // touches goes through the sync layer. CI on Linux is far quicker.
+          //
+          // A generous budget costs nothing when tests pass in milliseconds, and
+          // the alternative is a suite that fails for environmental reasons.
+          // Inline projects do not inherit root-level test options, so this must
+          // be set here explicitly.
+          testTimeout: 120_000,
+          hookTimeout: 120_000,
         },
       },
     ],

@@ -22,23 +22,24 @@ export function ObstructionForm({ wall, onSubmit }: ObstructionFormProps) {
     e.preventDefault();
     setError(null);
 
-    // parseLength accepts both `32` and `2' 8"`, so the same field serves
-    // either habit without a separate unit toggle.
+    // parseLength takes both `32` and `2' 8"`, so one field serves either habit.
     const x = parseLength(xIn);
     const y = parseLength(yIn);
     const w = parseLength(widthIn);
     const h = parseLength(heightIn);
 
     if (x === null || y === null || w === null || h === null) {
-      setError('Enter each measurement as inches (32) or feet and inches (2\' 8").');
+      setError('Enter each measurement in inches (32) or feet and inches (2\' 8").');
       return;
     }
     if (w <= 0 || h <= 0) {
-      setError('Width and height must be greater than zero.');
+      setError('Width and height need to be greater than zero.');
       return;
     }
     if (x + w > wall.widthIn || y + h > wall.heightIn) {
-      setError(`That does not fit — the wall is ${wall.widthIn}" by ${wall.heightIn}".`);
+      setError(
+        `That runs past the edge. ${wall.name} is ${wall.widthIn}" by ${wall.heightIn}".`,
+      );
       return;
     }
 
@@ -51,41 +52,63 @@ export function ObstructionForm({ wall, onSubmit }: ObstructionFormProps) {
       widthIn: w,
       heightIn: h,
     });
+    setLabel('');
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h3>Add an obstruction</h3>
+    <form className="panel" onSubmit={handleSubmit}>
+      <h3>Mark an obstruction</h3>
 
-      <label htmlFor="obs-kind">Type</label>
-      <select
-        id="obs-kind"
-        value={kind}
-        onChange={(e) => setKind(e.target.value as ObstructionKind)}
-      >
-        {KINDS.map((k) => (
-          <option key={k} value={k}>{k}</option>
-        ))}
-      </select>
+      <div className="fields">
+        <div className="field field--num">
+          <label htmlFor="obs-kind">Type</label>
+          <select
+            id="obs-kind"
+            value={kind}
+            onChange={(e) => setKind(e.target.value as ObstructionKind)}
+          >
+            {KINDS.map((k) => (
+              <option key={k} value={k}>{k}</option>
+            ))}
+          </select>
+        </div>
 
-      <label htmlFor="obs-label">Label</label>
-      <input id="obs-label" value={label} onChange={(e) => setLabel(e.target.value)} />
+        <div className="field field--grow">
+          <label htmlFor="obs-label">Label</label>
+          <input
+            id="obs-label"
+            value={label}
+            placeholder="Front door"
+            onChange={(e) => setLabel(e.target.value)}
+          />
+        </div>
 
-      <label htmlFor="obs-x">From left</label>
-      <input id="obs-x" value={xIn} onChange={(e) => setXIn(e.target.value)} />
+        <div className="field field--num">
+          <label htmlFor="obs-x">From left</label>
+          <input id="obs-x" value={xIn} onChange={(e) => setXIn(e.target.value)} />
+        </div>
 
-      <label htmlFor="obs-y">From floor</label>
-      <input id="obs-y" value={yIn} onChange={(e) => setYIn(e.target.value)} />
+        <div className="field field--num">
+          <label htmlFor="obs-y">From floor</label>
+          <input id="obs-y" value={yIn} onChange={(e) => setYIn(e.target.value)} />
+        </div>
 
-      <label htmlFor="obs-width">Width</label>
-      <input id="obs-width" value={widthIn} onChange={(e) => setWidthIn(e.target.value)} />
+        <div className="field field--num">
+          <label htmlFor="obs-width">Width</label>
+          <input id="obs-width" value={widthIn} onChange={(e) => setWidthIn(e.target.value)} />
+        </div>
 
-      <label htmlFor="obs-height">Height</label>
-      <input id="obs-height" value={heightIn} onChange={(e) => setHeightIn(e.target.value)} />
+        <div className="field field--num">
+          <label htmlFor="obs-height">Height</label>
+          <input id="obs-height" value={heightIn} onChange={(e) => setHeightIn(e.target.value)} />
+        </div>
 
-      {error !== null && <p role="alert">{error}</p>}
+        <button type="submit" className="btn--primary">Add obstruction</button>
+      </div>
 
-      <button type="submit">Add obstruction</button>
+      {error !== null && (
+        <p className="notice notice--alert" role="alert">{error}</p>
+      )}
     </form>
   );
 }

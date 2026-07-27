@@ -3,16 +3,22 @@ import { Template } from 'aws-cdk-lib/assertions';
 import { describe, expect, it } from 'vitest';
 import { BootstrapStack } from '../lib/bootstrap-stack.js';
 
-function synth() {
-  const app = new App();
-  const stack = new BootstrapStack(app, 'TestBootstrap', {
-    env: { account: '111111111111', region: 'us-east-1' },
-    githubOwner: 'CrispyCabot',
-    githubRepo: 'poster-walls-editor',
-    githubOwnerId: '18431358',
-    githubRepoId: '1312969424',
-  });
-  return Template.fromStack(stack);
+let cached: Template | undefined;
+
+/** Synthesized once for the whole file — see the note in main-stack.test.ts. */
+function synth(): Template {
+  if (cached === undefined) {
+    const app = new App();
+    const stack = new BootstrapStack(app, 'TestBootstrap', {
+      env: { account: '111111111111', region: 'us-east-1' },
+      githubOwner: 'CrispyCabot',
+      githubRepo: 'poster-walls-editor',
+      githubOwnerId: '18431358',
+      githubRepoId: '1312969424',
+    });
+    cached = Template.fromStack(stack);
+  }
+  return cached;
 }
 
 describe('BootstrapStack', () => {

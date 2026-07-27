@@ -3,13 +3,24 @@ import { Match, Template } from 'aws-cdk-lib/assertions';
 import { describe, expect, it } from 'vitest';
 import { MainStack } from '../lib/main-stack.js';
 
-function synth() {
-  const app = new App();
-  const stack = new MainStack(app, 'TestStack', {
-    env: { account: '111111111111', region: 'us-east-1' },
-    useCustomDomain: false,
-  });
-  return Template.fromStack(stack);
+let cached: Template | undefined;
+
+/**
+ * Synthesized once for the whole file. `NodejsFunction` runs esbuild during
+ * synth, so calling this per test bundled the Lambda eleven times and made the
+ * first test race a timeout on a cold cache. `Template` is a read-only
+ * snapshot, so sharing it between assertions is safe.
+ */
+function synth(): Template {
+  if (cached === undefined) {
+    const app = new App();
+    const stack = new MainStack(app, 'TestStack', {
+      env: { account: '111111111111', region: 'us-east-1' },
+      useCustomDomain: false,
+    });
+    cached = Template.fromStack(stack);
+  }
+  return cached;
 }
 
 describe('MainStack', () => {

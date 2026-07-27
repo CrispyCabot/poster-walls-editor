@@ -1,0 +1,401 @@
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource-variable/jetbrains-mono';
+
+/* ---------------------------------------------------------------------------
+   Poster Walls — drafting set
+
+   The visual language is the architectural elevation drawing, because that is
+   literally what the wall canvas is. Dimension strings, a one-foot grid,
+   monospace annotations, hairline rules. Ultramarine is the drafting ink, used
+   only for things you can act on.
+   --------------------------------------------------------------------------- */
+
+:root {
+  --paper: #fbfbf9;
+  --sheet: #ffffff;
+  --grid: #dce4e8;
+  --rule: #c3ced5;
+  --ink: #14181d;
+  --ink-soft: #5c6670;
+  --blueprint: #1f3fbf;
+  --blueprint-wash: #eaeeff;
+  --danger: #a3231b;
+
+  --door: #e6d2ae;
+  --window: #cfe2ef;
+  --outlet: #dfe3e6;
+  --generic: #e4e2dd;
+
+  --display: 'Space Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
+  --mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --step: 8px;
+  --sheet-max: 68rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 16px;
+  line-height: 1.5;
+  /* Faint drafting grid on the page itself — the sheet you are working on. */
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
+}
+
+/* --- structure ----------------------------------------------------------- */
+
+.masthead {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--step) * 2);
+  padding: calc(var(--step) * 2) calc(var(--step) * 3);
+  background: var(--sheet);
+  border-bottom: 1px solid var(--ink);
+}
+
+.masthead__mark {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.masthead__spacer {
+  flex: 1;
+}
+
+.sheet {
+  max-width: var(--sheet-max);
+  margin: calc(var(--step) * 4) auto;
+  padding: calc(var(--step) * 4);
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  box-shadow: 0 1px 0 rgb(20 24 29 / 0.04);
+}
+
+/* The title block, borrowed from the corner of a real drawing sheet. */
+.titleblock {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: calc(var(--step) * 2);
+  padding-bottom: calc(var(--step) * 2);
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: calc(var(--step) * 4);
+  flex-wrap: wrap;
+}
+
+.titleblock h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.eyebrow {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: calc(var(--step) * 0.75);
+}
+
+.meta {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.04em;
+}
+
+/* --- type ---------------------------------------------------------------- */
+
+h2,
+h3 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0 0 calc(var(--step) * 1.5);
+}
+
+a {
+  color: var(--blueprint);
+  text-underline-offset: 3px;
+}
+
+/* --- forms --------------------------------------------------------------- */
+
+.panel {
+  border: 1px solid var(--rule);
+  padding: calc(var(--step) * 2.5);
+  margin: calc(var(--step) * 3) 0;
+  background: var(--sheet);
+}
+
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--step) * 2);
+  align-items: flex-end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--step) * 0.5);
+  min-width: 0;
+}
+
+.field--grow {
+  flex: 1 1 12rem;
+}
+
+.field--num {
+  flex: 0 0 6.5rem;
+}
+
+label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+input,
+select {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  padding: calc(var(--step) * 1) calc(var(--step) * 1.25);
+  width: 100%;
+  min-width: 0;
+}
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--blueprint);
+  outline-offset: 2px;
+}
+
+/* --- buttons ------------------------------------------------------------- */
+
+button {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-radius: 0;
+  border: 1px solid var(--ink);
+  background: var(--sheet);
+  color: var(--ink);
+  padding: calc(var(--step) * 1.1) calc(var(--step) * 2);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+button:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--sheet);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--blueprint);
+  border-color: var(--blueprint);
+  color: #fff;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.btn--quiet {
+  border-color: var(--rule);
+  color: var(--ink-soft);
+  padding: calc(var(--step) * 0.6) calc(var(--step) * 1.2);
+  font-size: 0.65rem;
+}
+
+.btn--quiet:hover:not(:disabled) {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+.btn--tab {
+  border-color: var(--rule);
+  color: var(--ink-soft);
+}
+
+.btn--tab[aria-pressed='true'] {
+  background: var(--blueprint-wash);
+  border-color: var(--blueprint);
+  color: var(--blueprint);
+}
+
+/* --- lists --------------------------------------------------------------- */
+
+.stack {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--step) * 2);
+  padding: calc(var(--step) * 1.75) 0;
+  border-bottom: 1px solid var(--grid);
+}
+
+.row:first-child {
+  border-top: 1px solid var(--grid);
+}
+
+.row__name {
+  flex: 1;
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  min-width: 0;
+}
+
+.row__index {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--ink-soft);
+  min-width: 2.5rem;
+}
+
+/* --- wall canvas --------------------------------------------------------- */
+
+.drawing {
+  margin: calc(var(--step) * 3) 0;
+  padding: calc(var(--step) * 2);
+  border: 1px solid var(--rule);
+  background: var(--sheet);
+  overflow-x: auto;
+}
+
+.drawing svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* --- states -------------------------------------------------------------- */
+
+.notice {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  padding: calc(var(--step) * 1.5) calc(var(--step) * 2);
+  border-left: 3px solid var(--rule);
+  color: var(--ink-soft);
+  background: var(--paper);
+  margin: calc(var(--step) * 2) 0;
+}
+
+.notice--alert {
+  border-left-color: var(--danger);
+  color: var(--danger);
+}
+
+.empty {
+  padding: calc(var(--step) * 5) calc(var(--step) * 2);
+  text-align: center;
+  border: 1px dashed var(--rule);
+  color: var(--ink-soft);
+  margin: calc(var(--step) * 3) 0;
+}
+
+.empty strong {
+  display: block;
+  font-size: 1.1rem;
+  color: var(--ink);
+  margin-bottom: calc(var(--step) * 0.5);
+  font-weight: 600;
+}
+
+/* --- sign in ------------------------------------------------------------- */
+
+.gate {
+  max-width: 32rem;
+  margin: calc(var(--step) * 12) auto;
+  padding: calc(var(--step) * 5);
+  background: var(--sheet);
+  border: 1px solid var(--ink);
+  text-align: left;
+}
+
+.gate h1 {
+  font-size: clamp(2rem, 6vw, 3.25rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin: 0 0 calc(var(--step) * 2);
+}
+
+.gate p {
+  color: var(--ink-soft);
+  margin: 0 0 calc(var(--step) * 4);
+  max-width: 34ch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .sheet {
+    margin: calc(var(--step) * 2);
+    padding: calc(var(--step) * 2.5);
+  }
+  .field--num {
+    flex: 1 1 5rem;
+  }
+}

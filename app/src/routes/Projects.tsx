@@ -8,20 +8,32 @@ export function Projects() {
   const remove = useDeleteProject();
   const [name, setName] = useState('');
 
-  if (isLoading) return <p>Loading your projects…</p>;
+  if (isLoading) return <p className="notice">Loading your projects…</p>;
 
   if (error) {
-    return <p role="alert">Could not load your projects: {(error as Error).message}</p>;
+    return (
+      <p className="notice notice--alert" role="alert">
+        Could not load your projects. {(error as Error).message}
+      </p>
+    );
   }
 
   const projects = data?.projects ?? [];
 
   return (
-    <main>
-      <h1>Projects</h1>
-      <p><Link to="/">Back</Link></p>
+    <div className="sheet">
+      <div className="titleblock">
+        <div>
+          <span className="eyebrow">Drawing set</span>
+          <h1>Projects</h1>
+        </div>
+        <span className="meta">
+          {projects.length} {projects.length === 1 ? 'project' : 'projects'}
+        </span>
+      </div>
 
       <form
+        className="panel"
         onSubmit={(e) => {
           e.preventDefault();
           const trimmed = name.trim();
@@ -30,26 +42,45 @@ export function Projects() {
           setName('');
         }}
       >
-        <label htmlFor="project-name">Project name</label>
-        <input id="project-name" value={name} onChange={(e) => setName(e.target.value)} />
-        <button type="submit" disabled={create.isPending}>
-          {create.isPending ? 'Creating…' : 'Create'}
-        </button>
+        <h3>Start a project</h3>
+        <div className="fields">
+          <div className="field field--grow">
+            <label htmlFor="project-name">Project name</label>
+            <input
+              id="project-name"
+              value={name}
+              placeholder="Living room"
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <button type="submit" className="btn--primary" disabled={create.isPending}>
+            {create.isPending ? 'Creating' : 'Create project'}
+          </button>
+        </div>
       </form>
 
       {create.error && (
-        <p role="alert">Could not create: {(create.error as Error).message}</p>
+        <p className="notice notice--alert" role="alert">
+          Could not create that project. {(create.error as Error).message}
+        </p>
       )}
 
       {projects.length === 0 ? (
-        <p>No projects yet. Create one above to get started.</p>
+        <div className="empty">
+          <strong>No projects yet</strong>
+          Name a room above to start measuring its walls.
+        </div>
       ) : (
-        <ul>
-          {projects.map((p) => (
-            <li key={p.id}>
-              <Link to={`/projects/${p.id}`}>{p.name}</Link>{' '}
+        <ul className="stack">
+          {projects.map((p, i) => (
+            <li className="row" key={p.id}>
+              <span className="row__index">{String(i + 1).padStart(2, '0')}</span>
+              <span className="row__name">
+                <Link to={`/projects/${p.id}`}>{p.name}</Link>
+              </span>
               <button
                 type="button"
+                className="btn--quiet"
                 onClick={() => remove.mutate(p.id)}
                 aria-label={`Delete ${p.name}`}
               >
@@ -59,6 +90,6 @@ export function Projects() {
           ))}
         </ul>
       )}
-    </main>
+    </div>
   );
 }

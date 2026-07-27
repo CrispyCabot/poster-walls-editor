@@ -9,41 +9,66 @@ interface Me {
 }
 
 export function Home() {
-  const { status, user, accessToken, signIn, signOut } = useAuth();
+  const { status, user, accessToken, signIn } = useAuth();
   const [me, setMe] = useState<Me | null>(null);
   const [meError, setMeError] = useState<string | null>(null);
 
   useEffect(() => {
     if (accessToken === null) return;
+    const controller = new AbortController();
     fetch(`${getConfig().apiUrl}/me`, {
       headers: { Authorization: `Bearer ${accessToken}` },
+      signal: controller.signal,
     })
       .then(async (res) => {
         if (!res.ok) throw new Error(`API returned ${res.status}`);
         setMe((await res.json()) as Me);
       })
-      .catch((err: Error) => setMeError(err.message));
+      .catch((err: Error) => {
+        if (err.name !== 'AbortError') setMeError(err.message);
+      });
+    return () => controller.abort();
   }, [accessToken]);
 
-  if (status === 'loading') return <p>Loading…</p>;
+  if (status === 'loading') return <p className="notice">Loading…</p>;
 
   if (status === 'signed-out') {
     return (
-      <main>
-        <h1>Poster Walls Editor</h1>
-        <button onClick={() => void signIn()}>Sign in</button>
-      </main>
+      <div className="gate">
+        <span className="eyebrow">Measure twice</span>
+        <h1>Plan the wall before you drill it.</h1>
+        <p>
+          Enter a wall's real dimensions, mark what is already on it, and lay out
+          your frames to scale.
+        </p>
+        <button type="button" className="btn--primary" onClick={() => void signIn()}>
+          Sign in
+        </button>
+      </div>
     );
   }
 
   return (
-    <main>
-      <h1>Poster Walls Editor</h1>
-      <p>Signed in as {user?.profile.email}</p>
-      {meError !== null && <p role="alert">API check failed: {meError}</p>}
-      {me !== null && <p>API confirmed identity: {me.username}</p>}
-      <p><Link to="/projects">Your projects</Link></p>
-      <button onClick={() => void signOut()}>Sign out</button>
-    </main>
+    <div className="sheet">
+      <div className="titleblock">
+        <div>
+          <span className="eyebrow">Signed in as {user?.profile.email}</span>
+          <h1>Your drawing set</h1>
+        </div>
+        <span className="meta">
+          {me !== null ? `verified · ${me.username}` : 'verifying…'}
+        </span>
+      </div>
+
+      {meError !== null && (
+        <p className="notice notice--alert" role="alert">
+          The API rejected this session. {meError}
+        </p>
+      )}
+
+      <p>
+        <Link to="/projects">Open your projects →</Link>
+      </p>
+    </div>
   );
 }
