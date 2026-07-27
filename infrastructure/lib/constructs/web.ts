@@ -48,7 +48,19 @@ export class WebConstruct extends Construct {
       }],
     });
 
+    // Both or neither: CloudFront rejects an alias without a certificate that
+    // covers it, so passing one without the other would fail at deploy time.
+    const customDomain =
+      props.domainName !== undefined && props.certificate !== undefined
+        ? {
+            domainNames: [props.domainName],
+            certificate: props.certificate,
+            minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
+          }
+        : {};
+
     this.distribution = new cloudfront.Distribution(this, 'Distribution', {
+      ...customDomain,
       defaultRootObject: 'index.html',
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(this.webBucket as s3.IBucket),
