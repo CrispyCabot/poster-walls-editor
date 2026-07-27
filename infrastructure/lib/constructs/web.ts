@@ -1,15 +1,26 @@
 import { Duration, RemovalPolicy } from 'aws-cdk-lib';
+import type * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
+
+export interface WebConstructProps {
+  /**
+   * Serve the SPA from a custom domain. Omitted until DNS is delegated —
+   * CloudFront will not accept an alias without a validated certificate, and
+   * the certificate cannot validate until the zone answers.
+   */
+  readonly domainName?: string;
+  readonly certificate?: acm.ICertificate;
+}
 
 export class WebConstruct extends Construct {
   readonly webBucket: s3.Bucket;
   readonly imagesBucket: s3.Bucket;
   readonly distribution: cloudfront.Distribution;
 
-  constructor(scope: Construct, id: string) {
+  constructor(scope: Construct, id: string, props: WebConstructProps = {}) {
     super(scope, id);
 
     const bucketDefaults = {

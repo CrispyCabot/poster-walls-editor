@@ -1,5 +1,6 @@
 import { Duration, RemovalPolicy } from 'aws-cdk-lib';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
+import type * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import type * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
@@ -10,11 +11,19 @@ import { fileURLToPath } from 'node:url';
 
 export interface ApiConstructProps {
   readonly table: dynamodb.TableV2;
+  /**
+   * Serve the API from a custom domain. Omitted until DNS is delegated — the
+   * certificate cannot validate until the zone answers.
+   */
+  readonly domainName?: string;
+  readonly certificate?: acm.ICertificate;
 }
 
 export class ApiConstruct extends Construct {
   readonly httpApi: apigwv2.HttpApi;
   readonly fn: NodejsFunction;
+  /** Present only when a custom domain is configured. */
+  readonly domain: apigwv2.DomainName | undefined;
 
   constructor(scope: Construct, id: string, props: ApiConstructProps) {
     super(scope, id);
@@ -49,7 +58,19 @@ export class ApiConstruct extends Construct {
 
     props.table.grantReadWriteData(this.fn);
 
+    if (props.domainName !== undefined && props.certificate !== undefined) {
+      this.domain = new apigwv2.DomainName(this, 'DomainName', {
+        domainName: props.domainName,
+        certificate: props.certificate,
+      });
+    }
+
     this.httpApi = new apigwv2.HttpApi(this, 'HttpApi', {
+      ...(this.domain === undefined
+        ? {}
+        : {
+            defaultDomainMapping: { domainName: this.domain },
+          }),
       // Hono owns CORS so preflight and actual responses stay consistent.
       //
       // Deliberately NOT named 'Default': `constructs`' addressOf() hashes
