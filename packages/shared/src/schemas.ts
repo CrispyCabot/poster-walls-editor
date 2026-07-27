@@ -108,3 +108,15 @@ export const PlacementsSchema = z.object({
   placements: z.array(PlacementSchema),
 });
 export type Placements = z.infer<typeof PlacementsSchema>;
+
+/** Everything needed to draw a small preview of a project. */
+export const ProjectPreviewSchema = z.object({
+  id: IdSchema,
+  name: z.string(),
+  visibility: VisibilitySchema,
+  updatedAt: z.string(),
+  wall: WallSchema.nullable(),
+  posters: z.array(PosterSchema),
+  placements: z.array(PlacementSchema),
+});
+export type ProjectPreview = z.infer<typeof ProjectPreviewSchema>;

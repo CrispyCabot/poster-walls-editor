@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { type AuthedEnv, cognitoVerifier, createAuthMiddleware, type TokenVerifier } from './auth.js';
 import { errorHandler, notFound } from './errors.js';
 import { type ProjectDb, defaultProjectDb, registerProjectRoutes } from './routes/projects.js';
+import { type BrowseDb, defaultBrowseDb, registerBrowseRoutes } from './routes/browse.js';
 import { type PosterDb, defaultPosterDb, registerPosterRoutes } from './routes/posters.js';
 import { type WallDb, defaultWallDb, registerWallRoutes } from './routes/walls.js';
 
@@ -13,6 +14,7 @@ export interface AppDeps {
   db?: ProjectDb;
   wallDb?: WallDb;
   posterDb?: PosterDb;
+  browseDb?: BrowseDb;
 }
 
 // `AuthedEnv` types `c.get('user')` on routes behind `requireAuth`. `/health`
@@ -38,6 +40,10 @@ export function createApp(deps: AppDeps = {}): Hono<AuthedEnv> {
     return c.json({ sub, username });
   });
 
+  // Mounted before the project routes: Hono matches in registration order, so
+  // /projects/previews must be declared ahead of /projects/:id or "previews"
+  // gets captured as a project id.
+  registerBrowseRoutes(app, requireAuth, deps.browseDb ?? defaultBrowseDb);
   registerProjectRoutes(app, requireAuth, deps.db ?? defaultProjectDb);
   registerWallRoutes(app, requireAuth, deps.wallDb ?? defaultWallDb);
   registerPosterRoutes(app, requireAuth, deps.posterDb ?? defaultPosterDb);

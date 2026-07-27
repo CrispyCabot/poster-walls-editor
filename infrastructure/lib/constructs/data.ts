@@ -18,6 +18,18 @@ export class DataConstruct extends Construct {
       billing: dynamodb.Billing.onDemand(),
       pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       removalPolicy: RemovalPolicy.RETAIN,
+      globalSecondaryIndexes: [
+        {
+          // Browsing public projects. SPARSE on purpose: only a public
+          // project's META item carries GSI1PK, so private projects cost
+          // nothing to store here and cannot leak into a browse query — the
+          // index physically does not contain them.
+          indexName: 'GSI1',
+          partitionKey: { name: 'GSI1PK', type: dynamodb.AttributeType.STRING },
+          sortKey: { name: 'GSI1SK', type: dynamodb.AttributeType.STRING },
+          projectionType: dynamodb.ProjectionType.ALL,
+        },
+      ],
     });
   }
 }

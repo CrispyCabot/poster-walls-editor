@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
-import { useCreateProject, useDeleteProject, useProjects } from '../api/queries.js';
+import { useCreateProject, useDeleteProject, useProjectPreviews } from '../api/queries.js';
+import { ProjectCard } from '../components/ProjectCard.js';
 
 export function Projects() {
-  const { data, isLoading, error } = useProjects();
+  const { data, isLoading, error } = useProjectPreviews();
   const create = useCreateProject();
   const remove = useDeleteProject();
   const [name, setName] = useState('');
@@ -23,9 +23,7 @@ export function Projects() {
   return (
     <div className="page">
       <div className="pagehead">
-        <div>
-          <h1>Projects</h1>
-        </div>
+        <h1>Your projects</h1>
         <span className="muted">
           {projects.length} {projects.length === 1 ? 'project' : 'projects'}
         </span>
@@ -66,27 +64,18 @@ export function Projects() {
 
       {projects.length === 0 ? (
         <div className="empty">
-          <strong>No projects yet</strong>
-          Name a room above to start measuring its walls.
+          No projects yet. Name a room above to start measuring its walls.
         </div>
       ) : (
-        <ul className="list">
+        <div className="cardgrid">
           {projects.map((p) => (
-            <li className="item" key={p.id}>
-              <span className="item__name">
-                <Link to={`/projects/${p.id}`}>{p.name}</Link>
-              </span>
-              <button
-                type="button"
-                className="btn--danger"
-                onClick={() => remove.mutate(p.id)}
-                aria-label={`Delete ${p.name}`}
-              >
-                Delete
-              </button>
-            </li>
+            <ProjectCard
+              key={p.id}
+              preview={p}
+              onDelete={(id) => remove.mutate(id)}
+            />
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

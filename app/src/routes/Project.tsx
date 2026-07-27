@@ -12,6 +12,7 @@ import {
   useRemoveWall,
   useSavePlacements,
   useUpdatePoster,
+  useUpdateProject,
   useUpdateWall,
   useUploadImage,
 } from '../api/queries.js';
@@ -46,6 +47,7 @@ export function Project() {
   const addPoster = useAddPoster(id);
   const deletePoster = useDeletePoster(id);
   const updatePoster = useUpdatePoster(id);
+  const updateProject = useUpdateProject(id);
   const uploadImage = useUploadImage(id);
   const placements = usePlacements(id, active?.id);
   const savePlacements = useSavePlacements(id, active?.id);
@@ -247,6 +249,24 @@ export function Project() {
               </button>
 
               <span className="stagebar__spacer" />
+
+              <button
+                type="button"
+                className="btn--small btn--tab"
+                aria-pressed={data?.project.visibility === 'public'}
+                title="Public projects appear in Browse walls for everyone"
+                onClick={() => {
+                  const project = data?.project;
+                  if (project === undefined) return;
+                  updateProject.mutate({
+                    name: project.name,
+                    visibility: project.visibility === 'public' ? 'private' : 'public',
+                    version: project.version,
+                  });
+                }}
+              >
+                {data?.project.visibility === 'public' ? 'Public' : 'Private'}
+              </button>
 
               <button
                 type="button"

@@ -9,6 +9,7 @@ import {
   loadProject,
   renameProject,
 } from '../db/projects.js';
+import { LimitExceededError, assertUnder, limitsFor } from '../db/limits.js';
 import { ApiError } from '../errors.js';
 
 /** The persistence surface the routes use. Injected so tests need no AWS. */
@@ -42,6 +43,22 @@ export function registerProjectRoutes(
     const { sub } = c.get('user');
     // parse throws ZodError, which errorHandler maps to 400.
     const body = CreateProjectSchema.parse(await c.req.json());
+
+    // Ceiling check before the write, so a capped account cannot create the
+    // project and only then be told it was not allowed.
+    const [limits, existing] = await Promise.all([
+      limitsFor(sub),
+      db.listProjects(sub),
+    ]);
+    try {
+      assertUnder(existing.length, limits.projects, 'projects', 'projects');
+    } catch (err) {
+      if (err instanceof LimitExceededError) {
+        throw new ApiError(429, 'limit_reached', err.message);
+      }
+      throw err;
+    }
+
     const project = await db.createProject({
       ownerId: sub,
       name: body.name,

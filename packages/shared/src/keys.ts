@@ -50,3 +50,12 @@ export function layoutSk(wallId: string, layoutId: string): string {
 export function sharePk(token: string): string {
   return `SHARE#${token}`;
 }
+
+/** GSI1: browsing public projects. Sparse — only public META items carry it. */
+export const GSI1 = 'GSI1';
+export const PUBLIC_PARTITION = 'PUBLIC';
+
+/** Sort key for the public index. Newest first when the query runs backwards. */
+export function publicSk(updatedAt: string, projectId: string): string {
+  return `${updatedAt}#${projectId}`;
+}

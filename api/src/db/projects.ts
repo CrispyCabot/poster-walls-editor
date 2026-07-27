@@ -7,6 +7,8 @@ import {
 import {
   META,
   PROJECT_SK_PREFIX,
+  PUBLIC_PARTITION,
+  publicSk,
   WALL_SK_PREFIX,
   type Visibility,
   type Wall,
@@ -65,7 +67,19 @@ export async function createProject(input: {
         {
           Put: {
             TableName: tableName(),
-            Item: { PK: projectPk(project.id), SK: META, ...project },
+            Item: {
+              PK: projectPk(project.id),
+              SK: META,
+              ...project,
+              // The browse index is sparse: a private project simply has no
+              // GSI1PK, so it cannot appear in a public query at all.
+              ...(project.visibility === 'public'
+                ? {
+                    GSI1PK: PUBLIC_PARTITION,
+                    GSI1SK: publicSk(now, project.id),
+                  }
+                : {}),
+            },
             ConditionExpression: 'attribute_not_exists(PK)',
           },
         },
@@ -170,8 +184,14 @@ export async function renameProject(
       new UpdateCommand({
         TableName: tableName(),
         Key: { PK: projectPk(projectId), SK: META },
+        // Going public adds the index keys; going private REMOVEs them, which
+        // is what actually takes a project out of browse results.
         UpdateExpression:
-          'SET #name = :name, visibility = :visibility, updatedAt = :now, version = :next',
+          visibility === 'public'
+            ? 'SET #name = :name, visibility = :visibility, updatedAt = :now, ' +
+              'version = :next, GSI1PK = :gsi1pk, GSI1SK = :gsi1sk'
+            : 'SET #name = :name, visibility = :visibility, updatedAt = :now, ' +
+              'version = :next REMOVE GSI1PK, GSI1SK',
         // Ownership is part of the condition, so a non-owner's write fails the
         // same way a stale write does — no separate read, no timing signal.
         ConditionExpression: 'version = :expected AND ownerId = :ownerId',
@@ -183,6 +203,9 @@ export async function renameProject(
           ':next': expectedVersion + 1,
           ':expected': expectedVersion,
           ':ownerId': ownerId,
+          ...(visibility === 'public'
+            ? { ':gsi1pk': PUBLIC_PARTITION, ':gsi1sk': publicSk(now, projectId) }
+            : {}),
         },
         ReturnValues: 'ALL_NEW',
       }),

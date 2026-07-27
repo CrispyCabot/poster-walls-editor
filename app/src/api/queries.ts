@@ -4,10 +4,12 @@ import type {
   Placement,
   Poster,
   Project,
+  ProjectPreview,
   Wall,
 } from '@pwe/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../auth/AuthProvider.js';
+import { getConfig } from '../config.js';
 import { apiFetch } from './client.js';
 
 export const queryKeys = {
@@ -234,5 +236,68 @@ export function useUpdatePoster(projectId: string) {
       }),
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: ['projects', projectId, 'posters'] }),
+  });
+}
+
+// --- previews & browse -----------------------------------------------------
+
+export function useProjectPreviews() {
+  const token = useToken();
+  return useQuery({
+    queryKey: ['projects', 'previews'] as const,
+    enabled: token !== null,
+    queryFn: () =>
+      apiFetch<{ projects: ProjectPreview[] }>('/projects/previews', token!),
+  });
+}
+
+export interface BrowseQuery {
+  q: string;
+  widthIn: string;
+  heightIn: string;
+  offset: number;
+  limit: number;
+}
+
+/**
+ * Public projects. No token — browsing for ideas does not require an account,
+ * and the index this reads only contains projects explicitly made public.
+ */
+export function useBrowsePublic(query: BrowseQuery) {
+  const params = new URLSearchParams();
+  if (query.q.trim() !== '') params.set('q', query.q.trim());
+  if (query.widthIn.trim() !== '') params.set('widthIn', query.widthIn.trim());
+  if (query.heightIn.trim() !== '') params.set('heightIn', query.heightIn.trim());
+  params.set('offset', String(query.offset));
+  params.set('limit', String(query.limit));
+
+  return useQuery({
+    queryKey: ['public', 'projects', params.toString()] as const,
+    queryFn: async () => {
+      const res = await fetch(`${getConfig().apiUrl}/public/projects?${params}`);
+      if (!res.ok) throw new Error(`Browse failed with ${res.status}`);
+      return (await res.json()) as {
+        projects: ProjectPreview[];
+        total: number;
+        truncated: boolean;
+      };
+    },
+  });
+}
+
+export function useUpdateProject(projectId: string) {
+  const token = useToken();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { name: string; visibility: 'private' | 'public'; version: number }) =>
+      apiFetch<{ project: Project }>(`/projects/${projectId}`, required(token), {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.project(projectId) });
+      void qc.invalidateQueries({ queryKey: ['projects', 'previews'] });
+      void qc.invalidateQueries({ queryKey: ['public', 'projects'] });
+    },
   });
 }

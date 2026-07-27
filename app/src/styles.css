@@ -580,3 +580,81 @@ button:disabled {
   border-color: var(--accent);
   color: var(--accent);
 }
+
+/* --- project cards -------------------------------------------------------- */
+
+.cardgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.projectcard {
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+
+.projectcard__link {
+  display: block;
+  line-height: 0;
+}
+
+.card__thumb {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--bg);
+  aspect-ratio: 16 / 10;
+}
+
+.card__thumb--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.projectcard__foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: var(--border-width) solid var(--border);
+}
+
+.projectcard__meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.projectcard__name {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projectcard__name:hover {
+  color: var(--accent);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.rule {
+  border: 0;
+  border-top: var(--border-width) solid var(--border);
+  margin: 32px 0;
+}
