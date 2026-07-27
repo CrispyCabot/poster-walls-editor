@@ -207,3 +207,17 @@ export function useSavePlacements(projectId: string, wallId: string | undefined)
     },
   });
 }
+
+export function useUpdatePoster(projectId: string) {
+  const token = useToken();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ posterId, poster }: { posterId: string; poster: CreatePosterInput }) =>
+      apiFetch<{ poster: Poster }>(`/projects/${projectId}/posters/${posterId}`, token, {
+        method: 'PUT',
+        body: JSON.stringify(poster),
+      }),
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: ['projects', projectId, 'posters'] }),
+  });
+}

@@ -134,3 +134,24 @@ export async function putPlacements(
 
   return placements;
 }
+
+/** Replaces a poster in place, keeping its id so placements stay valid. */
+export async function updatePoster(
+  projectId: string,
+  ownerId: string,
+  posterId: string,
+  input: Omit<Poster, 'id'>,
+): Promise<Poster | null> {
+  if (!(await ownsProject(projectId, ownerId))) return null;
+
+  const poster: Poster = { id: posterId, ...input };
+
+  await docClient().send(
+    new PutCommand({
+      TableName: tableName(),
+      Item: { PK: projectPk(projectId), SK: posterSk(posterId), ...poster },
+    }),
+  );
+
+  return poster;
+}

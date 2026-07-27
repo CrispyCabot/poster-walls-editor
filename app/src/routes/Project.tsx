@@ -11,6 +11,7 @@ import {
   useProject,
   useRemoveWall,
   useSavePlacements,
+  useUpdatePoster,
   useUpdateWall,
   useUploadImage,
 } from '../api/queries.js';
@@ -38,6 +39,7 @@ export function Project() {
   const posters = usePosters(id);
   const addPoster = useAddPoster(id);
   const deletePoster = useDeletePoster(id);
+  const updatePoster = useUpdatePoster(id);
   const uploadImage = useUploadImage(id);
   const placements = usePlacements(id, active?.id);
   const savePlacements = useSavePlacements(id, active?.id);
@@ -177,6 +179,23 @@ export function Project() {
                 writePlacements(current.filter((p) => p.posterId !== posterId))
               }
               onUpload={uploadImage}
+              onSetImage={(posterId, imageKey) => {
+                const poster = posterList.find((p) => p.id === posterId);
+                if (poster === undefined) return;
+                // A full replace keeps the id, so existing placements survive.
+                updatePoster.mutate({
+                  posterId,
+                  poster: {
+                    name: poster.name,
+                    widthIn: poster.widthIn,
+                    heightIn: poster.heightIn,
+                    frameWidthIn: poster.frameWidthIn,
+                    frameColor: poster.frameColor,
+                    shape: poster.shape,
+                    imageKey,
+                  },
+                });
+              }}
             />
           </div>
         )}

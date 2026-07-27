@@ -20,6 +20,8 @@ export interface PosterPanelProps {
   onRemoveFromWall: (posterId: string) => void;
   /** Uploads the file and resolves to the stored image key. */
   onUpload: (file: File) => Promise<string>;
+  /** Attaches an already-uploaded image to an existing poster. */
+  onSetImage: (posterId: string, imageKey: string) => void;
 }
 
 export function PosterPanel({
@@ -31,7 +33,23 @@ export function PosterPanel({
   onPlace,
   onRemoveFromWall,
   onUpload,
+  onSetImage,
 }: PosterPanelProps) {
+  const [uploadingFor, setUploadingFor] = useState<string | null>(null);
+  const [rowError, setRowError] = useState<string | null>(null);
+
+  async function attachImage(posterId: string, file: File) {
+    setRowError(null);
+    setUploadingFor(posterId);
+    try {
+      onSetImage(posterId, await onUpload(file));
+    } catch (err) {
+      setRowError(`Could not upload that image. ${(err as Error).message}`);
+    } finally {
+      setUploadingFor(null);
+    }
+  }
+
   const [name, setName] = useState('');
   const [widthIn, setWidthIn] = useState('24');
   const [heightIn, setHeightIn] = useState('36');
@@ -113,6 +131,28 @@ export function PosterPanel({
                     {p.widthIn}" × {p.heightIn}"
                   </span>
                 </span>
+                {/* A label wrapping a hidden input is the accessible way to
+                    style a file picker — clicking the label opens it. */}
+                <label className="btn--small filebtn" htmlFor={`img-${p.id}`}>
+                  {uploadingFor === p.id
+                    ? 'Uploading…'
+                    : p.imageKey === undefined
+                      ? 'Add image'
+                      : 'Replace'}
+                </label>
+                <input
+                  id={`img-${p.id}`}
+                  className="visually-hidden"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  disabled={uploadingFor !== null}
+                  onChange={(e) => {
+                    const chosen = e.target.files?.[0];
+                    if (chosen !== undefined) void attachImage(p.id, chosen);
+                    // Reset so picking the same file twice still fires.
+                    e.target.value = '';
+                  }}
+                />
                 <button
                   type="button"
                   className="btn--small"
@@ -132,6 +172,10 @@ export function PosterPanel({
             );
           })}
         </div>
+      )}
+
+      {rowError !== null && (
+        <p className="notice notice--alert" role="alert">{rowError}</p>
       )}
 
       <form className="card" onSubmit={(e) => void handleSubmit(e)} style={{ marginTop: 16 }}>

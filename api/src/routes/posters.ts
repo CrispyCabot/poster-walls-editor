@@ -9,6 +9,7 @@ import {
   listPosters,
   putPlacements,
   removePoster,
+  updatePoster,
 } from '../db/posters.js';
 import { ApiError } from '../errors.js';
 
@@ -16,6 +17,7 @@ export interface PosterDb {
   addPoster: typeof addPoster;
   listPosters: typeof listPosters;
   removePoster: typeof removePoster;
+  updatePoster: typeof updatePoster;
   getPlacements: typeof getPlacements;
   putPlacements: typeof putPlacements;
 }
@@ -24,6 +26,7 @@ export const defaultPosterDb: PosterDb = {
   addPoster,
   listPosters,
   removePoster,
+  updatePoster,
   getPlacements,
   putPlacements,
 };
@@ -59,6 +62,19 @@ export function registerPosterRoutes(
     const poster = await db.addPoster(c.req.param('id'), sub, input);
     if (poster === null) throw new ApiError(404, 'not_found', 'Not found');
     return c.json({ poster }, 201);
+  });
+
+  app.put('/projects/:id/posters/:posterId', requireAuth, async (c) => {
+    const { sub } = c.get('user');
+    const input = CreatePosterSchema.parse(await c.req.json());
+    const poster = await db.updatePoster(
+      c.req.param('id'),
+      sub,
+      c.req.param('posterId'),
+      input,
+    );
+    if (poster === null) throw new ApiError(404, 'not_found', 'Not found');
+    return c.json({ poster });
   });
 
   app.delete('/projects/:id/posters/:posterId', requireAuth, async (c) => {
