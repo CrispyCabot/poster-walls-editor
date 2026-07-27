@@ -45,7 +45,13 @@ export class WebConstruct extends Construct {
       },
       additionalBehaviors: {
         '/i/*': {
-          origin: origins.S3BucketOrigin.withOriginAccessControl(this.imagesBucket as s3.IBucket),
+          // The image pipeline writes uploads/<uuid>/{original,display,thumb}.webp.
+          // originPath rewrites /i/<uuid>/display.webp to the S3 key
+          // uploads/<uuid>/display.webp, matching the pipeline's key layout
+          // and the spec's documented public URL shape.
+          origin: origins.S3BucketOrigin.withOriginAccessControl(this.imagesBucket as s3.IBucket, {
+            originPath: '/uploads',
+          }),
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
         },

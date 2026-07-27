@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import { createApp } from './app.js';
 import { ApiError } from './errors.js';
 
@@ -6,6 +7,17 @@ import { ApiError } from './errors.js';
 interface ErrorBody {
   error: { code: string; message: string };
 }
+
+// A custom refine whose message embeds the rejected value, standing in for
+// any zod schema whose issue text can end up echoing submitted data — the
+// case the handler must never forward to the response body.
+const bodySchema = z.object({
+  secretField: z.string().superRefine((val, ctx) => {
+    if (val !== 'expected') {
+      ctx.addIssue({ code: 'custom', message: `rejected value: ${val}` });
+    }
+  }),
+});
 
 /**
  * Routes that throw on purpose are mounted by the test, not by createApp —
@@ -20,6 +32,11 @@ function appWithThrowingRoutes() {
   });
   app.get('/__throw', () => {
     throw new Error('secret internal detail');
+  });
+  app.post('/__validate', async (c) => {
+    const body = await c.req.json();
+    bodySchema.parse(body); // throws ZodError on a bad payload
+    return c.json({ ok: true });
   });
   return app;
 }
@@ -58,6 +75,19 @@ describe('error handling', () => {
     const body = (await res.json()) as ErrorBody;
     expect(body.error.code).toBe('internal_error');
     expect(body.error.message).not.toContain('secret');
+  });
+
+  it('maps a thrown ZodError to 400 without echoing the offending value', async () => {
+    const res = await appWithThrowingRoutes().request('/__validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secretField: 'super-secret-value-xyz' }),
+    });
+    expect(res.status).toBe(400);
+    const rawBody = await res.text();
+    expect(rawBody).not.toContain('super-secret-value-xyz');
+    const body = JSON.parse(rawBody) as ErrorBody;
+    expect(body.error.code).toBe('validation_error');
   });
 });
 

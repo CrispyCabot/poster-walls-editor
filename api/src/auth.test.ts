@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from './app.js';
+import { cognitoVerifier } from './auth.js';
 
 /** Shape of the uniform error body, for asserting on parsed JSON. */
 interface ErrorBody {
@@ -51,5 +52,37 @@ describe('GET /me', () => {
 describe('unauthenticated routes', () => {
   it('leaves /health open', async () => {
     expect((await app().request('/health')).status).toBe(200);
+  });
+});
+
+describe('cognitoVerifier', () => {
+  const originalPoolId = process.env.USER_POOL_ID;
+  const originalClientId = process.env.USER_POOL_CLIENT_ID;
+
+  beforeEach(() => {
+    delete process.env.USER_POOL_ID;
+    delete process.env.USER_POOL_CLIENT_ID;
+  });
+
+  afterEach(() => {
+    if (originalPoolId === undefined) delete process.env.USER_POOL_ID;
+    else process.env.USER_POOL_ID = originalPoolId;
+    if (originalClientId === undefined) delete process.env.USER_POOL_CLIENT_ID;
+    else process.env.USER_POOL_CLIENT_ID = originalClientId;
+  });
+
+  it('logs the misconfiguration loudly, rejects with a generic error, and retries construction on the next call', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const verify = cognitoVerifier();
+
+    await expect(verify('some-token')).rejects.toBeInstanceOf(Error);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+
+    // A poisoned memo would mean the second call fails without ever trying
+    // to rebuild — i.e. no second log line.
+    await expect(verify('some-token')).rejects.toBeInstanceOf(Error);
+    expect(errorSpy).toHaveBeenCalledTimes(2);
+
+    errorSpy.mockRestore();
   });
 });

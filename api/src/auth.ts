@@ -52,7 +52,17 @@ export function cognitoVerifier(): TokenVerifier {
   }
 
   return async (token) => {
-    verifier ??= buildVerifier();
+    if (verifier === undefined) {
+      try {
+        verifier = buildVerifier();
+      } catch (err) {
+        // Misconfiguration, not a bad token. Make it findable in CloudWatch —
+        // the caller still gets a generic 401, which is indistinguishable from
+        // an invalid token without this log line.
+        console.error('failed to construct Cognito verifier', err);
+        throw err;
+      }
+    }
     const payload = await verifier.verify(token);
     return { sub: payload.sub, username: String(payload.username) };
   };

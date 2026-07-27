@@ -1,4 +1,6 @@
 import type { Context } from 'hono';
+import { HTTPException } from 'hono/http-exception';
+import { ZodError } from 'zod';
 
 export class ApiError extends Error {
   constructor(
@@ -17,6 +19,15 @@ export const notFound = (c: Context) =>
 export function errorHandler(err: Error, c: Context) {
   if (err instanceof ApiError) {
     return c.json({ error: { code: err.code, message: err.message } }, err.status);
+  }
+  if (err instanceof ZodError) {
+    // The issue list can echo back submitted values (e.g. a rejected string),
+    // so it goes only to CloudWatch — never into the response body.
+    console.error('validation error', err.issues);
+    return c.json({ error: { code: 'validation_error', message: 'Invalid request' } }, 400);
+  }
+  if (err instanceof HTTPException) {
+    return err.getResponse();
   }
   // Never leak internal messages to the client; the details go to CloudWatch.
   console.error('unhandled error', err);

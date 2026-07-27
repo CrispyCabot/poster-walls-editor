@@ -19,13 +19,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<Status>('loading');
 
   useEffect(() => {
+    let cancelled = false;
+
+    // `oidc-client-ts`'s automaticSilentRenew keeps the *stored* token fresh,
+    // but only these events tell React the in-memory copy is stale. An
+    // expired stored user must not read as signed-in, and a stale token must
+    // not survive a failed renewal.
+    function applyUser(found: User | null) {
+      if (cancelled) return;
+      const signedIn = found !== null && !found.expired;
+      setUser(signedIn ? found : null);
+      setStatus(signedIn ? 'signed-in' : 'signed-out');
+    }
+
+    function onUserLoaded(loadedUser: User) {
+      applyUser(loadedUser);
+    }
+
+    function onUserUnloaded() {
+      applyUser(null);
+    }
+
+    function onSilentRenewError(err: Error) {
+      // A failed renewal leaves a soon-to-expire (or already-expired) token
+      // in memory. Fail loudly and drop the session rather than let API
+      // calls start returning 401s with no visible cause.
+      console.error('silent token renewal failed', err);
+      applyUser(null);
+    }
+
+    userManager.events.addUserLoaded(onUserLoaded);
+    userManager.events.addUserUnloaded(onUserUnloaded);
+    userManager.events.addSilentRenewError(onSilentRenewError);
+
     userManager
       .getUser()
-      .then((found) => {
-        setUser(found);
-        setStatus(found ? 'signed-in' : 'signed-out');
-      })
-      .catch(() => setStatus('signed-out'));
+      .then(applyUser)
+      .catch(() => {
+        if (!cancelled) setStatus('signed-out');
+      });
+
+    return () => {
+      cancelled = true;
+      userManager.events.removeUserLoaded(onUserLoaded);
+      userManager.events.removeUserUnloaded(onUserUnloaded);
+      userManager.events.removeSilentRenewError(onSilentRenewError);
+    };
   }, []);
 
   const value = useMemo<AuthValue>(

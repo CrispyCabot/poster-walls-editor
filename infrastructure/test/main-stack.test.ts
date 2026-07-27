@@ -81,6 +81,32 @@ describe('web hosting', () => {
     });
   });
 
+  it('resolves the /i/* behavior to the images bucket under the uploads/ prefix', () => {
+    // The image pipeline writes uploads/<uuid>/{original,display,thumb}.webp.
+    // Without an originPath rewrite, /i/<uuid>/display.webp would map to the
+    // S3 key i/<uuid>/display.webp, which the pipeline never writes to —
+    // every uploaded image would 404 through CloudFront.
+    const template = synth().toJSON() as {
+      Resources: Record<string, { Type: string; Properties: Record<string, unknown> }>;
+    };
+    const distribution = Object.values(template.Resources).find(
+      (r) => r.Type === 'AWS::CloudFront::Distribution',
+    );
+    expect(distribution).toBeDefined();
+
+    const distConfig = distribution!.Properties.DistributionConfig as {
+      Origins: { Id: string; OriginPath?: string }[];
+      CacheBehaviors: { PathPattern: string; TargetOriginId: string }[];
+    };
+
+    const imageBehavior = distConfig.CacheBehaviors.find((b) => b.PathPattern === '/i/*');
+    expect(imageBehavior).toBeDefined();
+
+    const imageOrigin = distConfig.Origins.find((o) => o.Id === imageBehavior!.TargetOriginId);
+    expect(imageOrigin).toBeDefined();
+    expect(imageOrigin!.OriginPath).toBe('/uploads');
+  });
+
   it('creates two buckets, both blocking public access', () => {
     const t = synth();
     t.resourceCountIs('AWS::S3::Bucket', 2);
