@@ -14,9 +14,14 @@
   "scripts": {
     "typecheck": "tsc --build && tsc -p infrastructure/tsconfig.json --noEmit && tsc -p app/tsconfig.json --noEmit",
     "test": "vitest run",
-    "build": "npm run build --workspaces --if-present"
+    "build": "npm run build --workspaces --if-present",
+    "dev:env": "node scripts/write-dev-env.mjs",
+    "dev:api": "tsx watch --env-file-if-exists=.env.local api/src/dev-server.ts",
+    "dev:app": "npm run dev --workspace @pwe/app",
+    "dev": "concurrently -n api,app -c cyan,magenta \"npm:dev:api\" \"npm:dev:app\""
   },
   "devDependencies": {
+    "concurrently": "^9.2.4",
     "jsdom": "^29.1.1",
     "tsx": "^4.23.1",
     "typescript": "^5.9.3",

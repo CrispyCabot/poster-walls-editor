@@ -1,10 +1,16 @@
 import {
+  type Guide,
   type LengthMode,
+  type SnapOptions,
+  type SnapTarget,
+  DEFAULT_SNAP,
   type Viewport,
   fitToViewport,
   formatLength,
   outerSize,
+  rectFromCenter,
   screenToWall,
+  snapCenter,
   wallToScreen,
 } from '@pwe/layout-engine';
 import type { Obstruction, Placement, Poster, Wall } from '@pwe/shared';
@@ -26,6 +32,8 @@ export interface WallCanvasProps {
   lengthMode: LengthMode;
   /** Called when a drag ends, with the poster's new centre in inches. */
   onMove: (posterId: string, centerXIn: number, centerYIn: number) => void;
+  /** Snap behaviour. Pass threshold 0 to turn snapping off. */
+  snapOptions?: SnapOptions;
 }
 
 export function WallCanvas({
@@ -35,12 +43,14 @@ export function WallCanvas({
   viewport,
   lengthMode,
   onMove,
+  snapOptions = DEFAULT_SNAP,
 }: WallCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   // Live position while dragging, so the poster follows the pointer without a
   // round trip to the server on every frame.
   const [preview, setPreview] = useState<Placement | null>(null);
+  const [guides, setGuides] = useState<Guide[]>([]);
 
   const size = { width: wall.widthIn, height: wall.heightIn };
   const fit = fitToViewport(size, viewport);
@@ -99,9 +109,45 @@ export function WallCanvas({
         if (dragging === null) return;
         const poster = byId.get(dragging);
         if (poster === undefined) return;
+
         const at = pointerToWall(e);
+        const moving = outerSize({
+          width: poster.widthIn,
+          height: poster.heightIn,
+          frameWidth: poster.frameWidthIn,
+        });
+
+        // Snap against every other placed poster plus the obstructions, so a
+        // frame lines up with a window as readily as with another frame.
+        const targets: SnapTarget[] = [
+          ...placements
+            .filter((p) => p.posterId !== dragging)
+            .flatMap((p) => {
+              const other = byId.get(p.posterId);
+              if (other === undefined) return [];
+              const outer = outerSize({
+                width: other.widthIn,
+                height: other.heightIn,
+                frameWidth: other.frameWidthIn,
+              });
+              return [{ rect: rectFromCenter({ x: p.centerXIn, y: p.centerYIn }, outer) }];
+            }),
+          ...wall.obstructions.map((o) => ({
+            rect: { x: o.xIn, y: o.yIn, width: o.widthIn, height: o.heightIn },
+          })),
+        ];
+
+        const snapped = snapCenter(at, moving, targets, size, snapOptions);
+        setGuides(snapped.guides);
         setPreview(
-          clamp({ posterId: dragging, centerXIn: at.x, centerYIn: at.y }, poster),
+          clamp(
+            {
+              posterId: dragging,
+              centerXIn: snapped.center.x,
+              centerYIn: snapped.center.y,
+            },
+            poster,
+          ),
         );
       }}
       onPointerUp={() => {
@@ -110,10 +156,12 @@ export function WallCanvas({
         }
         setDragging(null);
         setPreview(null);
+        setGuides([]);
       }}
       onPointerLeave={() => {
         setDragging(null);
         setPreview(null);
+        setGuides([]);
       }}
     >
       <rect
@@ -142,6 +190,39 @@ export function WallCanvas({
             fill={KIND_FILL[o.kind]}
             stroke="var(--obstruction-edge)"
             strokeWidth={1}
+          />
+        );
+      })}
+
+      {/* Alignment guides, drawn under the posters so they never obscure the
+          thing being positioned. */}
+      {guides.map((g) => {
+        const at = wallToScreen(
+          g.axis === 'x' ? { x: g.at, y: 0 } : { x: 0, y: g.at },
+          size,
+          fit,
+        );
+        return g.axis === 'x' ? (
+          <line
+            key={`gx-${g.at}`}
+            x1={at.x}
+            y1={topLeft.y}
+            x2={at.x}
+            y2={topLeft.y + drawnHeight}
+            stroke="var(--canvas-selected)"
+            strokeWidth={1}
+            strokeDasharray={g.kind === 'center' ? undefined : '5 4'}
+          />
+        ) : (
+          <line
+            key={`gy-${g.at}`}
+            x1={topLeft.x}
+            y1={at.y}
+            x2={topLeft.x + drawnWidth}
+            y2={at.y}
+            stroke="var(--canvas-selected)"
+            strokeWidth={1}
+            strokeDasharray={g.kind === 'center' ? undefined : '5 4'}
           />
         );
       })}

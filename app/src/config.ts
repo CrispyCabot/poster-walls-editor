@@ -24,7 +24,9 @@ export function loadConfig(origin: string): AppConfig {
     cognitoDomain: required('VITE_COGNITO_DOMAIN', env.VITE_COGNITO_DOMAIN).replace(/\/$/, ''),
     userPoolClientId: required('VITE_USER_POOL_CLIENT_ID', env.VITE_USER_POOL_CLIENT_ID),
     redirectUri: `${origin}/callback`,
-    imageBaseUrl: origin,
+    // Images are served by CloudFront. Locally there is no such route, so the
+    // dev env points this at the deployed distribution instead of the origin.
+    imageBaseUrl: (env.VITE_IMAGE_BASE_URL ?? origin).replace(/\/$/, ''),
   };
 }
 

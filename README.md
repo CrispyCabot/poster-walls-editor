@@ -28,6 +28,26 @@ Needs Node 24+.
 npm install
 ```
 
+## Running it locally
+
+```bash
+aws login          # the local API talks to real AWS
+npm run dev:env    # writes .env.local from the deployed stack outputs
+npm run dev        # api on :8787, app on :5173
+```
+
+Then open http://localhost:5173.
+
+Local development runs against the **real** Cognito pool and the **real**
+DynamoDB table, using your AWS credentials. That is deliberate — auth and
+persistence then behave exactly as they do in production, rather than against
+stubs that drift. `http://localhost:5173` is already a registered Cognito
+callback URL, so signing in works.
+
+Two consequences worth knowing: you are editing live data, and images load from
+the deployed CloudFront distribution, because there is no local equivalent of
+the `/i/*` route.
+
 ## Everyday commands
 
 Run these from the repo root.

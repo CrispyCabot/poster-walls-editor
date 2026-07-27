@@ -34,6 +34,7 @@ export class MainStack extends Stack {
     new CfnOutput(this, 'ApiUrl', { value: api.httpApi.apiEndpoint });
     new CfnOutput(this, 'TableName', { value: data.table.tableName });
     new CfnOutput(this, 'WebUrl', { value: webUrl });
+    new CfnOutput(this, 'ImagesBucketName', { value: web.imagesBucket.bucketName });
     new CfnOutput(this, 'WebBucketName', { value: web.webBucket.bucketName });
     new CfnOutput(this, 'DistributionId', { value: web.distribution.distributionId });
     new CfnOutput(this, 'UserPoolId', { value: auth.userPool.userPoolId });

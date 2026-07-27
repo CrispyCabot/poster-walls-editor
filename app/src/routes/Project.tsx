@@ -1,4 +1,4 @@
-import { type LengthMode, formatLength } from '@pwe/layout-engine';
+import { type LengthMode, type SnapOptions, formatLength } from '@pwe/layout-engine';
 import type { Obstruction, Placement } from '@pwe/shared';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
@@ -29,6 +29,12 @@ export function Project() {
   const [selected, setSelected] = useState<string | null>(null);
   const [lengthMode, setLengthMode] = useState<LengthMode>('inches');
   const [showSetup, setShowSetup] = useState(false);
+  const [snapOn, setSnapOn] = useState(true);
+
+  // Threshold 0 turns snapping off without changing any other behaviour.
+  const snapOptions: SnapOptions = snapOn
+    ? { threshold: 1.5, gridIn: 0 }
+    : { threshold: 0, gridIn: 0 };
 
   const walls = data?.walls ?? [];
   const active = walls.find((w) => w.id === selected) ?? walls[0];
@@ -231,6 +237,15 @@ export function Project() {
                 onChange={(e) => replaceWall({ backgroundColor: e.target.value })}
               />
 
+              <button
+                type="button"
+                className="btn--small btn--tab"
+                aria-pressed={snapOn}
+                onClick={() => setSnapOn(!snapOn)}
+              >
+                Snap
+              </button>
+
               <span className="stagebar__spacer" />
 
               <button
@@ -250,6 +265,7 @@ export function Project() {
                 placements={current}
                 viewport={VIEWPORT}
                 lengthMode={lengthMode}
+                snapOptions={snapOptions}
                 onMove={(posterId, centerXIn, centerYIn) =>
                   writePlacements(
                     current.map((p) =>

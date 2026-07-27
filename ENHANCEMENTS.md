@@ -1,0 +1,9 @@
+- Image upload button for poster creation doesn't seem to have styling, can you make it match the rest of the app
+- Home page "POSTER WALLS" doesn't have much on it. Can you remove the 'verified' thing indicating who my user is, and show two sections:
+    - "Your Projects" - this should show previews of poster wall projects the signed in user has created. It should only show enough to fit the width of the screen, and then any additional shouldl require the user clicking "Open your projects" to move to the projects page. The component for the preview should be reused in both of these pages
+    - "Browse Projects" - this should be a section that automatically loads public projects to look through for ideas. It should similarly show the preview with paginated handling to go through projects and a search bar with filters. E.g. filter on approximate dimensions (with exact results up top), poster names, project names, etc. While doing this, insert some sample poster walls directly into the database owned by a fake user so that 'public' walls can be tested by a user that's not me
+- When I refresh inside a page (e.g. inside a project editor), the screen just goes black and it doesn't properly load.
+- Suggest a list of security practices to implement. For example:
+    - Limit projects/image uploads for 'normal' users. I don't want some random person to find this site and start storing loads of images in it driving up my cost. There should be an override for this
+- Adding images isn't working - when I add the image, it just shows a filled rectangle that's the frame color instead of the image being stretched to fill the dimensions
+- When adding an image, the screen jerks me down for some reason and the whole bottom half of the screen becomes just black and I have to scroll up to the actual app
