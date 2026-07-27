@@ -59,3 +59,8 @@ export const PUBLIC_PARTITION = 'PUBLIC';
 export function publicSk(updatedAt: string, projectId: string): string {
   return `${updatedAt}#${projectId}`;
 }
+
+/** Narrows a stored shape value, defaulting anything unrecognised to rect. */
+export function toShape(value: unknown): 'rect' | 'circle' | 'diamond' {
+  return value === 'circle' || value === 'diamond' ? value : 'rect';
+}

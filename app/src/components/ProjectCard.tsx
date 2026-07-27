@@ -2,6 +2,7 @@ import { fitToViewport, outerSize, wallToScreen } from '@pwe/layout-engine';
 import type { Obstruction, ProjectPreview } from '@pwe/shared';
 import { Link } from 'react-router';
 import { getConfig } from '../config.js';
+import { PosterShape } from './PosterShape.js';
 
 const THUMB = { width: 320, height: 200, padding: 10 };
 
@@ -91,31 +92,22 @@ function Thumbnail({ preview }: { preview: ProjectPreview }) {
             ? undefined
             : `${getConfig().imageBaseUrl}/i/${poster.imageKey}`;
 
-        const round = poster.shape === 'circle';
-
         return (
           <g key={placement.posterId}>
-            {round ? (
-              <ellipse
-                cx={corner.x + w / 2}
-                cy={corner.y + h / 2}
-                rx={w / 2}
-                ry={h / 2}
-                fill={poster.frameColor}
-              />
-            ) : (
-              <rect x={corner.x} y={corner.y} width={w} height={h} fill={poster.frameColor} />
-            )}
-            {href !== undefined && (
-              <image
-                href={href}
-                x={corner.x + inset}
-                y={corner.y + inset}
-                width={poster.widthIn * fit.scale}
-                height={poster.heightIn * fit.scale}
-                preserveAspectRatio="xMidYMid slice"
-              />
-            )}
+            <PosterShape
+              poster={poster}
+              x={corner.x}
+              y={corner.y}
+              width={w}
+              height={h}
+              inset={inset}
+              href={href}
+              clipId={`thumb-${preview.id}-${placement.posterId}`}
+              outlineColor="var(--poster-outline)"
+              outlineWidth={0.5}
+              // Names are illegible at card size and just add noise.
+              showName={false}
+            />
           </g>
         );
       })}

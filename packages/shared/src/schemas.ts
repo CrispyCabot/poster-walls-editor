@@ -41,8 +41,11 @@ export const PosterSchema = z.object({
   heightIn: PositiveInches,
   frameWidthIn: NonNegativeInches.default(1),
   frameColor: HexColor.default('#000000'),
-  /** Records and round art hang as circles; the size fields are the diameter. */
-  shape: z.enum(['rect','circle']).default('rect'),
+  /**
+   * How the poster hangs. Width and height are always the bounding box —
+   * a circle's diameter, or the box a diamond's points touch.
+   */
+  shape: z.enum(['rect', 'circle', 'diamond']).default('rect'),
   imageKey: z.string().optional(),
 });
 /** Parsed form: defaulted fields are present. */

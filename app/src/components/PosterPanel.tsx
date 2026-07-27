@@ -12,7 +12,7 @@ export interface PosterPanelProps {
     heightIn: number;
     frameWidthIn: number;
     frameColor: string;
-    shape: 'rect' | 'circle';
+    shape: 'rect' | 'circle' | 'diamond';
     imageKey?: string;
   }) => void;
   onDelete: (posterId: string) => void;
@@ -55,7 +55,7 @@ export function PosterPanel({
   const [heightIn, setHeightIn] = useState('36');
   const [frameWidthIn, setFrameWidthIn] = useState('1');
   const [frameColor, setFrameColor] = useState('#000000');
-  const [shape, setShape] = useState<'rect' | 'circle'>('rect');
+  const [shape, setShape] = useState<'rect' | 'circle' | 'diamond'>('rect');
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -225,9 +225,10 @@ export function PosterPanel({
 
           <div className="field field--num">
             <label htmlFor="poster-shape">Shape</label>
-            <select id="poster-shape" value={shape} onChange={(e) => setShape(e.target.value as 'rect' | 'circle')}>
+            <select id="poster-shape" value={shape} onChange={(e) => setShape(e.target.value as 'rect' | 'circle' | 'diamond')}>
               <option value="rect">Rectangle</option>
               <option value="circle">Circle</option>
+              <option value="diamond">Diamond</option>
             </select>
           </div>
 

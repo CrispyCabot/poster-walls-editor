@@ -16,6 +16,7 @@ import {
 import type { Obstruction, Placement, Poster, Wall } from '@pwe/shared';
 import { useRef, useState } from 'react';
 import { getConfig } from '../config.js';
+import { PosterShape } from './PosterShape.js';
 
 const KIND_FILL: Record<Obstruction['kind'], string> = {
   door: 'var(--obstruction-door)',
@@ -266,114 +267,22 @@ export function WallCanvas({
               setPreview(placement);
             }}
           >
-            {poster.shape === 'circle' ? (
-              <>
-                <ellipse
-                  cx={corner.x + frameW / 2}
-                  cy={corner.y + frameH / 2}
-                  rx={frameW / 2}
-                  ry={frameH / 2}
-                  fill={poster.frameColor}
-                />
-                <clipPath id={`clip-${placement.posterId}`}>
-                  <ellipse
-                    cx={corner.x + frameW / 2}
-                    cy={corner.y + frameH / 2}
-                    rx={artW / 2}
-                    ry={artH / 2}
-                  />
-                </clipPath>
-                {href === undefined ? (
-                  <>
-                    <ellipse
-                      cx={corner.x + frameW / 2}
-                      cy={corner.y + frameH / 2}
-                      rx={artW / 2}
-                      ry={artH / 2}
-                      fill="var(--poster-blank)"
-                    />
-                    <text
-                      x={corner.x + frameW / 2}
-                      y={corner.y + frameH / 2}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fontSize={Math.max(8, Math.min(14, artW / 9))}
-                      fill="var(--poster-blank-ink)"
-                    >
-                      {poster.name}
-                    </text>
-                  </>
-                ) : (
-                  <image
-                    href={href}
-                    x={corner.x + inset}
-                    y={corner.y + inset}
-                    width={artW}
-                    height={artH}
-                    preserveAspectRatio="xMidYMid slice"
-                    clipPath={`url(#clip-${placement.posterId})`}
-                  />
-                )}
-                <ellipse
-                  cx={corner.x + frameW / 2}
-                  cy={corner.y + frameH / 2}
-                  rx={frameW / 2}
-                  ry={frameH / 2}
-                  fill="none"
-                  stroke={dragging === placement.posterId ? 'var(--canvas-selected)' : 'var(--poster-outline)'}
-                  strokeWidth={dragging === placement.posterId ? 2 : 1}
-                />
-              </>
-            ) : (
-              <>
-                <rect
-                  x={corner.x}
-                  y={corner.y}
-                  width={frameW}
-                  height={frameH}
-                  fill={poster.frameColor}
-                />
-                {href === undefined ? (
-                  <>
-                    <rect
-                      x={corner.x + inset}
-                      y={corner.y + inset}
-                      width={artW}
-                      height={artH}
-                      fill="var(--poster-blank)"
-                    />
-                    <text
-                      x={corner.x + frameW / 2}
-                      y={corner.y + frameH / 2}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fontSize={Math.max(9, Math.min(15, artW / 8))}
-                      fill="var(--poster-blank-ink)"
-                    >
-                      {poster.name}
-                    </text>
-                  </>
-                ) : (
-                  <image
-                    href={href}
-                    x={corner.x + inset}
-                    y={corner.y + inset}
-                    width={artW}
-                    height={artH}
-                    preserveAspectRatio="xMidYMid slice"
-                  />
-                )}
-                <rect
-                  x={corner.x}
-                  y={corner.y}
-                  width={frameW}
-                  height={frameH}
-                  fill="none"
-                  stroke={dragging === placement.posterId ? 'var(--canvas-selected)' : 'var(--poster-outline)'}
-                  strokeWidth={dragging === placement.posterId ? 2 : 1}
-                />
-              </>
-            )}
+            <PosterShape
+              poster={poster}
+              x={corner.x}
+              y={corner.y}
+              width={frameW}
+              height={frameH}
+              inset={inset}
+              href={href}
+              clipId={`clip-${placement.posterId}`}
+              outlineColor={
+                dragging === placement.posterId
+                  ? 'var(--canvas-selected)'
+                  : 'var(--poster-outline)'
+              }
+              outlineWidth={dragging === placement.posterId ? 2 : 1}
+            />
           </g>
         );
       })}

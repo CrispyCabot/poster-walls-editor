@@ -9,6 +9,7 @@ import {
   type ProjectPreview,
   type Wall,
   WALL_SK_PREFIX,
+  toShape,
   projectPk,
 } from '@pwe/shared';
 import { docClient, tableName } from './client.js';
@@ -48,7 +49,7 @@ function toPreview(items: Record<string, unknown>[]): ProjectPreview | null {
       heightIn: Number(i.heightIn),
       frameWidthIn: Number(i.frameWidthIn),
       frameColor: String(i.frameColor),
-      shape: (i.shape === 'circle' ? 'circle' : 'rect') as 'rect' | 'circle',
+      shape: toShape(i.shape),
       ...(i.imageKey === undefined ? {} : { imageKey: String(i.imageKey) }),
     }));
 

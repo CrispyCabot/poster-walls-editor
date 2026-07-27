@@ -6,6 +6,7 @@ import {
   type Poster,
   layoutSk,
   posterSk,
+  toShape,
   projectPk,
 } from '@pwe/shared';
 import { docClient, tableName } from './client.js';
@@ -65,7 +66,7 @@ export async function listPosters(
     heightIn: Number(i.heightIn),
     frameWidthIn: Number(i.frameWidthIn),
     frameColor: String(i.frameColor),
-    shape: (i.shape === 'circle' ? 'circle' : 'rect') as 'rect' | 'circle',
+    shape: toShape(i.shape),
     ...(i.imageKey === undefined ? {} : { imageKey: String(i.imageKey) }),
   }));
 }
