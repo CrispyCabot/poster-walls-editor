@@ -31,6 +31,21 @@ describe('MainStack', () => {
     });
   });
 
+  it('gives the API Lambda an explicit log group with one-month retention', () => {
+    const t = synth();
+    t.hasResourceProperties('AWS::Logs::LogGroup', {
+      RetentionInDays: 30,
+    });
+  });
+
+  it('does not synthesize the deprecated custom-resource log-retention handler', () => {
+    // logRetention: RetentionDays.ONE_MONTH provisions a second Lambda,
+    // an IAM role for it, and this Custom::LogRetention resource. Passing
+    // an explicit `logGroup` instead must not bring any of that back.
+    const t = synth();
+    t.resourceCountIs('Custom::LogRetention', 0);
+  });
+
   it('exposes an HTTP API', () => {
     const t = synth();
     t.resourceCountIs('AWS::ApiGatewayV2::Api', 1);

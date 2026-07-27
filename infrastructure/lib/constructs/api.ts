@@ -1,4 +1,4 @@
-import { Duration } from 'aws-cdk-lib';
+import { Duration, RemovalPolicy } from 'aws-cdk-lib';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import type * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
@@ -19,6 +19,19 @@ export class ApiConstruct extends Construct {
   constructor(scope: Construct, id: string, props: ApiConstructProps) {
     super(scope, id);
 
+    // The Lambda's log group already exists in production (auto-created by
+    // Lambda on first invocation, named /aws/lambda/<function-name>). We
+    // deliberately do NOT set `logGroupName` here: doing so would make
+    // CloudFormation try to CREATE a group with that already-existing name
+    // and fail with "already exists", rolling back the stack. Leaving the
+    // name unset lets CDK/CloudFormation generate a fresh, non-colliding
+    // name; the old auto-created group is simply orphaned (stops receiving
+    // new logs, ages out per its already-set 30-day retention).
+    const logGroup = new logs.LogGroup(this, 'FnLogGroup', {
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
+
     this.fn = new NodejsFunction(this, 'Fn', {
       entry: fileURLToPath(new URL('../../../api/src/lambda.ts', import.meta.url)),
       handler: 'handler',
@@ -26,7 +39,7 @@ export class ApiConstruct extends Construct {
       architecture: lambda.Architecture.ARM_64,
       memorySize: 512,
       timeout: Duration.seconds(15),
-      logRetention: logs.RetentionDays.ONE_MONTH,
+      logGroup,
       environment: {
         TABLE_NAME: props.table.tableName,
         NODE_OPTIONS: '--enable-source-maps',
