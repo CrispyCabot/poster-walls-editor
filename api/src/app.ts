@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { type AuthedUser, cognitoVerifier, createAuthMiddleware, type TokenVerifier } from './auth.js';
+import { type AuthedEnv, cognitoVerifier, createAuthMiddleware, type TokenVerifier } from './auth.js';
 import { errorHandler, notFound } from './errors.js';
 
 export interface AppDeps {
@@ -8,8 +8,11 @@ export interface AppDeps {
   verify?: TokenVerifier;
 }
 
-export function createApp(deps: AppDeps = {}): Hono {
-  const app = new Hono();
+// `AuthedEnv` types `c.get('user')` on routes behind `requireAuth`. `/health`
+// is mounted on the same app and stays unauthenticated — `Variables` only
+// promises `user` is present, it does not require every route to set it.
+export function createApp(deps: AppDeps = {}): Hono<AuthedEnv> {
+  const app = new Hono<AuthedEnv>();
 
   // Tokens are bearer, not cookies, so a permissive reflection is safe here.
   // Task 9 narrows this to the deployed web origin via the WEB_ORIGIN env var.
@@ -24,7 +27,7 @@ export function createApp(deps: AppDeps = {}): Hono {
   const requireAuth = createAuthMiddleware(deps.verify ?? cognitoVerifier());
 
   app.get('/me', requireAuth, (c) => {
-    const { sub, username } = (c as unknown as { get(k: 'user'): AuthedUser }).get('user');
+    const { sub, username } = c.get('user');
     return c.json({ sub, username });
   });
 
