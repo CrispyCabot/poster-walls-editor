@@ -330,11 +330,37 @@ function ProjectEditor({ id }: { id: string }) {
                     {active.obstructions.map((o) => (
                       <li className="item" key={o.id}>
                         <span className="item__name">
-                          {o.label || o.kind}{' '}
-                          <span className="muted">
-                            {formatLength(o.widthIn, lengthMode)} × {formatLength(o.heightIn, lengthMode)}
-                          </span>
+                          {o.label || o.kind}
+                          <span className="muted"> · {o.kind}</span>
                         </span>
+                        {/* Every stored value, not just the size — the offsets
+                            are what you actually measure against on the wall. */}
+                        <dl className="measures">
+                          <div>
+                            <dt>Width</dt>
+                            <dd>{formatLength(o.widthIn, lengthMode)}</dd>
+                          </div>
+                          <div>
+                            <dt>Height</dt>
+                            <dd>{formatLength(o.heightIn, lengthMode)}</dd>
+                          </div>
+                          <div>
+                            <dt>From left</dt>
+                            <dd>{formatLength(o.xIn, lengthMode)}</dd>
+                          </div>
+                          <div>
+                            <dt>From floor</dt>
+                            <dd>{formatLength(o.yIn, lengthMode)}</dd>
+                          </div>
+                          <div>
+                            <dt>Top edge</dt>
+                            <dd>{formatLength(o.yIn + o.heightIn, lengthMode)}</dd>
+                          </div>
+                          <div>
+                            <dt>Right edge</dt>
+                            <dd>{formatLength(o.xIn + o.widthIn, lengthMode)}</dd>
+                          </div>
+                        </dl>
                         <button
                           type="button"
                           className="btn--danger"
