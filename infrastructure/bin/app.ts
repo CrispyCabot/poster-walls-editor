@@ -14,7 +14,7 @@ new MainStack(app, 'PosterWalls', {
     ...(process.env.CDK_DEFAULT_ACCOUNT ? { account: process.env.CDK_DEFAULT_ACCOUNT } : {}),
     region: process.env.CDK_DEFAULT_REGION ?? 'us-east-1',
   },
-  useCustomDomain: false,
+  useCustomDomain: true,
 });
 
 new BootstrapStack(app, 'PosterWallsBootstrap', {
