@@ -555,11 +555,37 @@ POST-REWRITE VERIFICATION (deploy run 30227887463, green):
   applied; Cognito user still CONFIRMED. 72/72 tests, typecheck 0.
 
 === CARRY-FORWARD INTO PLAN 2 (reviewer-triaged, none blocking) ===
-Do these first, before feature work multiplies them:
-  - Thread the Hono env generic through createApp so `c.get('user')` is typed,
-    instead of `c as unknown as {...}`. Cheap once; twelve casts if deferred.
-  - vitest.config.ts needs a projects split for jsdom component tests; the
-    per-file pragma was a deliberate stopgap.
+
+--- DONE before Plan 2 (commits 9732c02, 5505f81, 0841488, 454edc4) ---
+  [x] Hono env generic threaded through createApp — `c.get('user')` is now
+      genuinely typed, the `as unknown as` cast is gone. Proved real by
+      injecting `const x: number = c.get('user')` and confirming TS2322.
+  [x] vitest split into projects: `app` on jsdom, `node` for
+      packages/api/infrastructure. Per-file pragma removed. testTimeout 20000
+      set explicitly on the node project — inline projects do NOT inherit
+      root-level test options, which is easy to get wrong.
+  [x] Unit suffixes normalised in the PERSISTED contract: Obstruction
+      x/y/width/height -> xIn/yIn/widthIn/heightIn, Placement centerX/centerY ->
+      centerXIn/centerYIn. Done while DynamoDB still had 0 rows (verified), so
+      it cost nothing; after Plan 2 writes data it becomes a migration.
+      DELIBERATE BOUNDARY, recorded in packages/shared/README.md: the persisted
+      contract states units explicitly; layout-engine's Rect/Point/Size keep
+      plain geometry names (x, width) because that module is internal and
+      documents its inch convention once. Do not "fix" that inconsistency.
+  [x] logRetention replaced with an explicit LogGroup. Removed a whole Lambda,
+      an IAM role, a Custom::LogRetention resource, and a
+      logs:PutRetentionPolicy/DeleteRetentionPolicy on Resource "*".
+      Live stack went 3 Lambdas -> 2, 3 roles -> 2. Also fixes a recurring
+      LOCAL dev failure: OneDrive periodically corrupts
+      aws-cdk-lib/custom-resource-handlers/.../log-retention-handler/index.js
+      into an EINVAL readlink, which took out all infra tests until `npm ci`.
+      CDK auto-names the new group to avoid colliding with the pre-existing
+      auto-created /aws/lambda/<fn> group; both orphaned groups deleted by hand
+      after confirming logs flow to the new one.
+      NOTE: log group name is no longer the /aws/lambda/<fn> convention.
+  Tests 72 -> 74. All deployed and verified live.
+
+--- STILL OPEN ---
 Carry, decide when the relevant UI exists:
   - Rect/Size non-negative precondition undocumented (JSDoc when next touched).
   - Obstruction.label lacks .min(1) — product call at form-build time.
@@ -569,9 +595,7 @@ Carry, decide when the relevant UI exists:
   - No test for cognitoVerifier() itself (hard without a live pool).
   - Unit-suffix naming inconsistent (widthIn vs width/centerX). Zero rows exist
     in DynamoDB right now — this is the LAST moment the change is free.
-Infra hygiene:
-  - logRetention provisions an extra Lambda, role, and a logs:* on Resource "*";
-    switch to an explicit LogGroup. Removes 3 resources and 2 synth warnings.
+Infra hygiene (remaining):
   - No responseHeadersPolicy on CloudFront; SECURITY_HEADERS is one line and the
     SPA stores tokens in localStorage.
   - useCustomDomain is a DEAD FLAG — declared, passed, read by nothing. Setting
