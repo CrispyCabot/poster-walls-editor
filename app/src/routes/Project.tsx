@@ -20,6 +20,7 @@ import {
 import { ObstructionForm } from '../components/ObstructionForm.js';
 import { PosterPanel } from '../components/PosterPanel.js';
 import { WallCanvas } from '../components/WallCanvas.js';
+import { WallSettings } from '../components/WallSettings.js';
 import { ProjectViewer } from './ProjectViewer.js';
 
 /** Large fixed drawing surface; CSS scales it down to fit the stage. */
@@ -92,14 +93,22 @@ function ProjectEditor({ id }: { id: string }) {
 
   const writePlacements = (next: Placement[]) => savePlacements.mutate(next);
 
-  const replaceWall = (patch: Partial<{ backgroundColor: string; obstructions: Obstruction[] }>) => {
+  const replaceWall = (
+    patch: Partial<{
+      name: string;
+      widthIn: number;
+      heightIn: number;
+      backgroundColor: string;
+      obstructions: Obstruction[];
+    }>,
+  ) => {
     if (active === undefined) return;
     updateWall.mutate({
       wallId: active.id,
       wall: {
-        name: active.name,
-        widthIn: active.widthIn,
-        heightIn: active.heightIn,
+        name: patch.name ?? active.name,
+        widthIn: patch.widthIn ?? active.widthIn,
+        heightIn: patch.heightIn ?? active.heightIn,
         obstructions: patch.obstructions ?? active.obstructions,
         backgroundColor: patch.backgroundColor ?? active.backgroundColor,
       },
@@ -181,6 +190,18 @@ function ProjectEditor({ id }: { id: string }) {
             </button>
           </div>
         </form>
+
+        {active !== undefined && (
+          <WallSettings
+            key={active.id}
+            wall={active}
+            posters={posterList}
+            placements={current}
+            isSaving={updateWall.isPending}
+            onSave={(next) => replaceWall(next)}
+            onReflow={writePlacements}
+          />
+        )}
 
         {active !== undefined && (
           <div style={{ marginTop: 20 }}>
