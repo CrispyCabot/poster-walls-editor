@@ -8,6 +8,7 @@ validate requests) and `app` (to derive types), so the two cannot drift apart.
 ```
 src/
   ids.ts       opaque ID type
+  keys.ts      DynamoDB key builders for the single table
   schemas.ts   Obstruction, Wall, Poster, Placement, Project, CreateProject
 ```
 
