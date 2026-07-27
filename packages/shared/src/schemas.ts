@@ -26,6 +26,8 @@ export const WallSchema = z.object({
   widthIn: PositiveInches,
   heightIn: PositiveInches,
   obstructions: z.array(ObstructionSchema).default([]),
+  /** Paint colour, so the wall reads the way the room does. */
+  backgroundColor: HexColor.default('#FFFFFF'),
 });
 /** Parsed form: `obstructions` is always present. */
 export type Wall = z.infer<typeof WallSchema>;
@@ -92,3 +94,15 @@ export const CreateWallSchema = WallSchema.omit({ id: true });
 export type CreateWall = z.infer<typeof CreateWallSchema>;
 /** `obstructions` carries a .default([]), so construction needs the input type. */
 export type CreateWallInput = z.input<typeof CreateWallSchema>;
+
+/** Poster as submitted by a client; the server assigns the id. */
+export const CreatePosterSchema = PosterSchema.omit({ id: true });
+export type CreatePoster = z.infer<typeof CreatePosterSchema>;
+/** frameWidthIn and frameColor default, so construction needs the input type. */
+export type CreatePosterInput = z.input<typeof CreatePosterSchema>;
+
+/** The full set of placements for one wall, replaced as a unit. */
+export const PlacementsSchema = z.object({
+  placements: z.array(PlacementSchema),
+});
+export type Placements = z.infer<typeof PlacementsSchema>;

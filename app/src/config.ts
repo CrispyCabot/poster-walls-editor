@@ -3,6 +3,8 @@ export interface AppConfig {
   cognitoDomain: string;
   userPoolClientId: string;
   redirectUri: string;
+  /** Poster images share the SPA's CloudFront distribution, under /i/. */
+  imageBaseUrl: string;
 }
 
 function required(name: string, value: string | undefined): string {
@@ -22,6 +24,7 @@ export function loadConfig(origin: string): AppConfig {
     cognitoDomain: required('VITE_COGNITO_DOMAIN', env.VITE_COGNITO_DOMAIN).replace(/\/$/, ''),
     userPoolClientId: required('VITE_USER_POOL_CLIENT_ID', env.VITE_USER_POOL_CLIENT_ID),
     redirectUri: `${origin}/callback`,
+    imageBaseUrl: origin,
   };
 }
 

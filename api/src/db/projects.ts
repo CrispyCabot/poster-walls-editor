@@ -138,6 +138,8 @@ export async function loadProject(
       widthIn: Number(i.widthIn),
       heightIn: Number(i.heightIn),
       obstructions: (i.obstructions ?? []) as Wall['obstructions'],
+      // Walls written before wall colour existed have no stored value.
+      backgroundColor: String(i.backgroundColor ?? '#FFFFFF'),
     }));
 
   return {

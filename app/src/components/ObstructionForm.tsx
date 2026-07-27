@@ -56,7 +56,7 @@ export function ObstructionForm({ wall, onSubmit }: ObstructionFormProps) {
   }
 
   return (
-    <form className="panel" onSubmit={handleSubmit}>
+    <form className="card" onSubmit={handleSubmit}>
       <h3>Mark an obstruction</h3>
 
       <div className="fields">
@@ -73,7 +73,7 @@ export function ObstructionForm({ wall, onSubmit }: ObstructionFormProps) {
           </select>
         </div>
 
-        <div className="field field--grow">
+        <div className="field field--wide">
           <label htmlFor="obs-label">Label</label>
           <input
             id="obs-label"

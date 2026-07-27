@@ -1,401 +1,439 @@
-@import '@fontsource-variable/space-grotesk';
-@import '@fontsource-variable/jetbrains-mono';
-
-/* ---------------------------------------------------------------------------
-   Poster Walls — drafting set
-
-   The visual language is the architectural elevation drawing, because that is
-   literally what the wall canvas is. Dimension strings, a one-foot grid,
-   monospace annotations, hairline rules. Ultramarine is the drafting ink, used
-   only for things you can act on.
-   --------------------------------------------------------------------------- */
-
 :root {
-  --paper: #fbfbf9;
-  --sheet: #ffffff;
-  --grid: #dce4e8;
-  --rule: #c3ced5;
-  --ink: #14181d;
-  --ink-soft: #5c6670;
-  --blueprint: #1f3fbf;
-  --blueprint-wash: #eaeeff;
-  --danger: #a3231b;
+  --bg: #f6f7f8;
+  --surface: #ffffff;
+  --border: #d8dce0;
+  --border-strong: #b6bdc4;
+  --text: #1a1d21;
+  --text-soft: #667080;
+  --accent: #2563eb;
+  --accent-soft: #eff4ff;
+  --danger: #b42318;
 
-  --door: #e6d2ae;
-  --window: #cfe2ef;
-  --outlet: #dfe3e6;
-  --generic: #e4e2dd;
-
-  --display: 'Space Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
-  --mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
-
-  --step: 8px;
-  --sheet-max: 68rem;
+  --radius: 6px;
+  --gap: 12px;
 }
 
 * {
   box-sizing: border-box;
 }
 
-html {
-  -webkit-text-size-adjust: 100%;
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
   margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--display);
-  font-size: 16px;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
   line-height: 1.5;
-  /* Faint drafting grid on the page itself — the sheet you are working on. */
-  background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 32px 32px;
-  background-position: -1px -1px;
 }
 
-/* --- structure ----------------------------------------------------------- */
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- header --------------------------------------------------------------- */
 
 .masthead {
   display: flex;
-  align-items: baseline;
-  gap: calc(var(--step) * 2);
-  padding: calc(var(--step) * 2) calc(var(--step) * 3);
-  background: var(--sheet);
-  border-bottom: 1px solid var(--ink);
+  align-items: center;
+  gap: 20px;
+  padding: 0 24px;
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
 }
 
-.masthead__mark {
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink);
+.masthead a {
+  color: var(--text);
   text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.masthead a:hover {
+  color: var(--accent);
 }
 
 .masthead__spacer {
   flex: 1;
 }
 
-.sheet {
-  max-width: var(--sheet-max);
-  margin: calc(var(--step) * 4) auto;
-  padding: calc(var(--step) * 4);
-  background: var(--sheet);
-  border: 1px solid var(--rule);
-  box-shadow: 0 1px 0 rgb(20 24 29 / 0.04);
+/* --- page shells ---------------------------------------------------------- */
+
+/* Narrow, centred: lists and forms. */
+.page {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
 }
 
-/* The title block, borrowed from the corner of a real drawing sheet. */
-.titleblock {
+/* Full-bleed: the wall editor, which should own the screen. */
+.workspace {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  min-height: 0;
+}
+
+.workspace__side {
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.workspace__main {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: calc(var(--step) * 2);
-  padding-bottom: calc(var(--step) * 2);
-  border-bottom: 2px solid var(--ink);
-  margin-bottom: calc(var(--step) * 4);
-  flex-wrap: wrap;
+  flex-direction: column;
+  min-width: 0;
+  padding: 20px 24px 24px;
+  gap: 12px;
 }
 
-.titleblock h1 {
-  margin: 0;
-  font-size: clamp(1.75rem, 4vw, 2.75rem);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
+@media (max-width: 900px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+  .workspace__side {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
 }
 
-.eyebrow {
-  display: block;
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  margin-bottom: calc(var(--step) * 0.75);
-}
+/* --- type ----------------------------------------------------------------- */
 
-.meta {
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  color: var(--ink-soft);
-  letter-spacing: 0.04em;
-}
-
-/* --- type ---------------------------------------------------------------- */
-
-h2,
-h3 {
-  font-weight: 600;
+h1 {
+  font-size: 1.6rem;
+  font-weight: 650;
+  margin: 0 0 4px;
   letter-spacing: -0.01em;
 }
 
-h3 {
-  font-family: var(--mono);
-  font-size: 0.7rem;
+h2 {
+  font-size: 1.05rem;
   font-weight: 600;
-  letter-spacing: 0.2em;
+  margin: 0 0 10px;
+}
+
+h3 {
+  font-size: 0.8rem;
+  font-weight: 600;
   text-transform: uppercase;
-  color: var(--ink-soft);
-  margin: 0 0 calc(var(--step) * 1.5);
+  letter-spacing: 0.06em;
+  color: var(--text-soft);
+  margin: 0 0 10px;
+}
+
+.muted {
+  color: var(--text-soft);
+  font-size: 0.875rem;
 }
 
 a {
-  color: var(--blueprint);
-  text-underline-offset: 3px;
+  color: var(--accent);
 }
 
-/* --- forms --------------------------------------------------------------- */
+.pagehead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
 
-.panel {
-  border: 1px solid var(--rule);
-  padding: calc(var(--step) * 2.5);
-  margin: calc(var(--step) * 3) 0;
-  background: var(--sheet);
+/* --- cards & forms -------------------------------------------------------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 20px;
 }
 
 .fields {
   display: flex;
   flex-wrap: wrap;
-  gap: calc(var(--step) * 2);
+  gap: var(--gap);
   align-items: flex-end;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--step) * 0.5);
+  gap: 5px;
   min-width: 0;
+  flex: 1 1 8rem;
 }
 
-.field--grow {
-  flex: 1 1 12rem;
+.field--wide {
+  flex: 2 1 12rem;
 }
 
 .field--num {
-  flex: 0 0 6.5rem;
+  flex: 0 1 5.5rem;
+}
+
+.field--full {
+  flex: 1 1 100%;
 }
 
 label {
-  font-family: var(--mono);
-  font-size: 0.65rem;
+  font-size: 0.78rem;
   font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
+  color: var(--text-soft);
 }
 
 input,
 select {
-  font-family: var(--mono);
+  font: inherit;
   font-size: 0.9rem;
-  color: var(--ink);
-  background: var(--sheet);
-  border: 1px solid var(--rule);
-  border-radius: 0;
-  padding: calc(var(--step) * 1) calc(var(--step) * 1.25);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
   width: 100%;
   min-width: 0;
+}
+
+input[type='color'] {
+  padding: 3px;
+  height: 36px;
+  cursor: pointer;
+}
+
+input[type='file'] {
+  border: none;
+  padding: 0;
+  font-size: 0.82rem;
 }
 
 input:focus-visible,
 select:focus-visible,
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--blueprint);
-  outline-offset: 2px;
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
-/* --- buttons ------------------------------------------------------------- */
+/* --- buttons -------------------------------------------------------------- */
 
 button {
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  border-radius: 0;
-  border: 1px solid var(--ink);
-  background: var(--sheet);
-  color: var(--ink);
-  padding: calc(var(--step) * 1.1) calc(var(--step) * 2);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 8px 14px;
   cursor: pointer;
-  transition: background 120ms ease, color 120ms ease;
 }
 
 button:hover:not(:disabled) {
-  background: var(--ink);
-  color: var(--sheet);
+  background: var(--bg);
 }
 
 button:disabled {
-  opacity: 0.4;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .btn--primary {
-  background: var(--blueprint);
-  border-color: var(--blueprint);
+  background: var(--accent);
+  border-color: var(--accent);
   color: #fff;
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: var(--ink);
-  border-color: var(--ink);
+  background: #1d4ed8;
+  border-color: #1d4ed8;
 }
 
-.btn--quiet {
-  border-color: var(--rule);
-  color: var(--ink-soft);
-  padding: calc(var(--step) * 0.6) calc(var(--step) * 1.2);
-  font-size: 0.65rem;
+.btn--danger {
+  border-color: var(--border);
+  color: var(--danger);
+  padding: 5px 10px;
+  font-size: 0.8rem;
 }
 
-.btn--quiet:hover:not(:disabled) {
-  background: var(--danger);
-  border-color: var(--danger);
-  color: #fff;
+.btn--danger:hover:not(:disabled) {
+  background: #fef3f2;
 }
 
-.btn--tab {
-  border-color: var(--rule);
-  color: var(--ink-soft);
+.btn--small {
+  padding: 5px 10px;
+  font-size: 0.8rem;
 }
 
 .btn--tab[aria-pressed='true'] {
-  background: var(--blueprint-wash);
-  border-color: var(--blueprint);
-  color: var(--blueprint);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
-/* --- lists --------------------------------------------------------------- */
+/* --- lists ---------------------------------------------------------------- */
 
-.stack {
+.list {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.row {
+.item {
   display: flex;
   align-items: center;
-  gap: calc(var(--step) * 2);
-  padding: calc(var(--step) * 1.75) 0;
-  border-bottom: 1px solid var(--grid);
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
 }
 
-.row:first-child {
-  border-top: 1px solid var(--grid);
-}
-
-.row__name {
+.item__name {
   flex: 1;
-  font-size: 1.05rem;
+  min-width: 0;
   font-weight: 500;
-  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid var(--border-strong);
+  flex: 0 0 auto;
+}
+
+.thumb {
+  width: 34px;
+  height: 34px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  flex: 0 0 auto;
+  background: var(--bg);
+}
+
+/* --- wall stage ----------------------------------------------------------- */
+
+.stage {
+  flex: 1;
+  min-height: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.stage svg {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.stagebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+}
+
+.poster-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: grab;
+  margin-bottom: 8px;
+}
+
+.poster-chip:active {
+  cursor: grabbing;
+}
+
+.poster-chip__meta {
+  flex: 1;
   min-width: 0;
 }
 
-.row__index {
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  color: var(--ink-soft);
-  min-width: 2.5rem;
+.poster-chip__name {
+  font-weight: 500;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* --- wall canvas --------------------------------------------------------- */
-
-.drawing {
-  margin: calc(var(--step) * 3) 0;
-  padding: calc(var(--step) * 2);
-  border: 1px solid var(--rule);
-  background: var(--sheet);
-  overflow-x: auto;
-}
-
-.drawing svg {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
-
-/* --- states -------------------------------------------------------------- */
+/* --- states --------------------------------------------------------------- */
 
 .notice {
-  font-family: var(--mono);
-  font-size: 0.8rem;
-  padding: calc(var(--step) * 1.5) calc(var(--step) * 2);
-  border-left: 3px solid var(--rule);
-  color: var(--ink-soft);
-  background: var(--paper);
-  margin: calc(var(--step) * 2) 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  font-size: 0.875rem;
+  margin: 12px 0;
 }
 
 .notice--alert {
-  border-left-color: var(--danger);
+  border-color: #f3c6c1;
+  background: #fef3f2;
   color: var(--danger);
 }
 
 .empty {
-  padding: calc(var(--step) * 5) calc(var(--step) * 2);
+  padding: 32px 16px;
   text-align: center;
-  border: 1px dashed var(--rule);
-  color: var(--ink-soft);
-  margin: calc(var(--step) * 3) 0;
+  color: var(--text-soft);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
 }
 
-.empty strong {
-  display: block;
-  font-size: 1.1rem;
-  color: var(--ink);
-  margin-bottom: calc(var(--step) * 0.5);
-  font-weight: 600;
-}
-
-/* --- sign in ------------------------------------------------------------- */
+/* --- sign in -------------------------------------------------------------- */
 
 .gate {
-  max-width: 32rem;
-  margin: calc(var(--step) * 12) auto;
-  padding: calc(var(--step) * 5);
-  background: var(--sheet);
-  border: 1px solid var(--ink);
-  text-align: left;
+  max-width: 420px;
+  margin: 12vh auto;
+  padding: 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 
 .gate h1 {
-  font-size: clamp(2rem, 6vw, 3.25rem);
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  margin: 0 0 calc(var(--step) * 2);
+  font-size: 1.5rem;
+  margin-bottom: 8px;
 }
 
 .gate p {
-  color: var(--ink-soft);
-  margin: 0 0 calc(var(--step) * 4);
-  max-width: 34ch;
+  color: var(--text-soft);
+  margin: 0 0 24px;
 }
 
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
     animation: none !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .sheet {
-    margin: calc(var(--step) * 2);
-    padding: calc(var(--step) * 2.5);
-  }
-  .field--num {
-    flex: 1 1 5rem;
   }
 }

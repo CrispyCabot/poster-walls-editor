@@ -35,7 +35,6 @@ export function Home() {
   if (status === 'signed-out') {
     return (
       <div className="gate">
-        <span className="eyebrow">Measure twice</span>
         <h1>Plan the wall before you drill it.</h1>
         <p>
           Enter a wall's real dimensions, mark what is already on it, and lay out
@@ -49,13 +48,13 @@ export function Home() {
   }
 
   return (
-    <div className="sheet">
-      <div className="titleblock">
+    <div className="page">
+      <div className="pagehead">
         <div>
-          <span className="eyebrow">Signed in as {user?.profile.email}</span>
-          <h1>Your drawing set</h1>
+          <span className="muted">Signed in as {user?.profile.email}</span>
+          <h1>Poster Walls</h1>
         </div>
-        <span className="meta">
+        <span className="muted">
           {me !== null ? `verified · ${me.username}` : 'verifying…'}
         </span>
       </div>

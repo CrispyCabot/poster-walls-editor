@@ -1,4 +1,11 @@
-import type { CreateWallInput, Project, Wall } from '@pwe/shared';
+import type {
+  CreatePosterInput,
+  CreateWallInput,
+  Placement,
+  Poster,
+  Project,
+  Wall,
+} from '@pwe/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../auth/AuthProvider.js';
 import { apiFetch } from './client.js';
@@ -103,5 +110,100 @@ export function useRemoveWall(projectId: string) {
       }),
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: queryKeys.project(projectId) }),
+  });
+}
+
+// --- posters ---------------------------------------------------------------
+
+export function usePosters(projectId: string) {
+  const token = useToken();
+  return useQuery({
+    queryKey: ['projects', projectId, 'posters'] as const,
+    queryFn: () =>
+      apiFetch<{ posters: Poster[] }>(`/projects/${projectId}/posters`, token),
+  });
+}
+
+export function useAddPoster(projectId: string) {
+  const token = useToken();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (poster: CreatePosterInput) =>
+      apiFetch<{ poster: Poster }>(`/projects/${projectId}/posters`, token, {
+        method: 'POST',
+        body: JSON.stringify(poster),
+      }),
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: ['projects', projectId, 'posters'] }),
+  });
+}
+
+export function useDeletePoster(projectId: string) {
+  const token = useToken();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (posterId: string) =>
+      apiFetch<void>(`/projects/${projectId}/posters/${posterId}`, token, {
+        method: 'DELETE',
+      }),
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: ['projects', projectId, 'posters'] }),
+  });
+}
+
+/** Uploads straight to S3 with a presigned PUT; resolves to the image key. */
+export function useUploadImage(projectId: string) {
+  const token = useToken();
+  return async (file: File): Promise<string> => {
+    const { uploadUrl, imageKey } = await apiFetch<{
+      uploadUrl: string;
+      imageKey: string;
+    }>(`/projects/${projectId}/posters/upload-url`, token, {
+      method: 'POST',
+      body: JSON.stringify({ contentType: file.type }),
+    });
+
+    const res = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': file.type },
+    });
+    if (!res.ok) throw new Error(`S3 returned ${res.status}`);
+
+    return imageKey;
+  };
+}
+
+// --- placements ------------------------------------------------------------
+
+export function usePlacements(projectId: string, wallId: string | undefined) {
+  const token = useToken();
+  return useQuery({
+    queryKey: ['projects', projectId, 'walls', wallId, 'placements'] as const,
+    enabled: wallId !== undefined,
+    queryFn: () =>
+      apiFetch<{ placements: Placement[] }>(
+        `/projects/${projectId}/walls/${wallId}/placements`,
+        token,
+      ),
+  });
+}
+
+export function useSavePlacements(projectId: string, wallId: string | undefined) {
+  const token = useToken();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (placements: Placement[]) =>
+      apiFetch<{ placements: Placement[] }>(
+        `/projects/${projectId}/walls/${wallId}/placements`,
+        token,
+        { method: 'PUT', body: JSON.stringify({ placements }) },
+      ),
+    onSuccess: (data) => {
+      qc.setQueryData(
+        ['projects', projectId, 'walls', wallId, 'placements'],
+        data,
+      );
+    },
   });
 }

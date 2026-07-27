@@ -27,6 +27,9 @@ export class MainStack extends Stack {
     api.fn.addEnvironment('USER_POOL_CLIENT_ID', auth.client.userPoolClientId);
     api.fn.addEnvironment('WEB_ORIGIN', webUrl);
     api.fn.addEnvironment('IMAGES_BUCKET', web.imagesBucket.bucketName);
+    // The API mints presigned PUT URLs, which requires it to hold the
+    // permission it is delegating.
+    web.imagesBucket.grantPut(api.fn);
 
     new CfnOutput(this, 'ApiUrl', { value: api.httpApi.apiEndpoint });
     new CfnOutput(this, 'TableName', { value: data.table.tableName });

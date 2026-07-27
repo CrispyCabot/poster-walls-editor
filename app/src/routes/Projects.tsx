@@ -21,19 +21,18 @@ export function Projects() {
   const projects = data?.projects ?? [];
 
   return (
-    <div className="sheet">
-      <div className="titleblock">
+    <div className="page">
+      <div className="pagehead">
         <div>
-          <span className="eyebrow">Drawing set</span>
           <h1>Projects</h1>
         </div>
-        <span className="meta">
+        <span className="muted">
           {projects.length} {projects.length === 1 ? 'project' : 'projects'}
         </span>
       </div>
 
       <form
-        className="panel"
+        className="card"
         onSubmit={(e) => {
           e.preventDefault();
           const trimmed = name.trim();
@@ -44,7 +43,7 @@ export function Projects() {
       >
         <h3>Start a project</h3>
         <div className="fields">
-          <div className="field field--grow">
+          <div className="field field--wide">
             <label htmlFor="project-name">Project name</label>
             <input
               id="project-name"
@@ -71,16 +70,15 @@ export function Projects() {
           Name a room above to start measuring its walls.
         </div>
       ) : (
-        <ul className="stack">
-          {projects.map((p, i) => (
-            <li className="row" key={p.id}>
-              <span className="row__index">{String(i + 1).padStart(2, '0')}</span>
-              <span className="row__name">
+        <ul className="list">
+          {projects.map((p) => (
+            <li className="item" key={p.id}>
+              <span className="item__name">
                 <Link to={`/projects/${p.id}`}>{p.name}</Link>
               </span>
               <button
                 type="button"
-                className="btn--quiet"
+                className="btn--danger"
                 onClick={() => remove.mutate(p.id)}
                 aria-label={`Delete ${p.name}`}
               >

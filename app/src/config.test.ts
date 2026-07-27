@@ -16,6 +16,7 @@ describe('config', () => {
       cognitoDomain: 'https://auth.test',
       userPoolClientId: 'abc123',
       redirectUri: 'https://app.test/callback',
+      imageBaseUrl: 'https://app.test',
     });
   });
 

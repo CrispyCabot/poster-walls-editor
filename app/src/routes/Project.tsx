@@ -1,30 +1,50 @@
 import { type LengthMode, formatLength } from '@pwe/layout-engine';
-import type { Obstruction } from '@pwe/shared';
+import type { Obstruction, Placement } from '@pwe/shared';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import {
+  useAddPoster,
   useAddWall,
+  useDeletePoster,
+  usePlacements,
+  usePosters,
   useProject,
   useRemoveWall,
+  useSavePlacements,
   useUpdateWall,
+  useUploadImage,
 } from '../api/queries.js';
 import { ObstructionForm } from '../components/ObstructionForm.js';
+import { PosterPanel } from '../components/PosterPanel.js';
 import { WallCanvas } from '../components/WallCanvas.js';
 
-const VIEWPORT = { width: 760, height: 460, padding: 48 };
+/** Large fixed drawing surface; CSS scales it down to fit the stage. */
+const VIEWPORT = { width: 1400, height: 900, padding: 40 };
 
 export function Project() {
   const { id = '' } = useParams();
   const { data, isLoading, error } = useProject(id);
+
+  const [selected, setSelected] = useState<string | null>(null);
+  const [lengthMode, setLengthMode] = useState<LengthMode>('inches');
+  const [showSetup, setShowSetup] = useState(false);
+
+  const walls = data?.walls ?? [];
+  const active = walls.find((w) => w.id === selected) ?? walls[0];
+
   const addWall = useAddWall(id);
   const updateWall = useUpdateWall(id);
   const removeWall = useRemoveWall(id);
+  const posters = usePosters(id);
+  const addPoster = useAddPoster(id);
+  const deletePoster = useDeletePoster(id);
+  const uploadImage = useUploadImage(id);
+  const placements = usePlacements(id, active?.id);
+  const savePlacements = useSavePlacements(id, active?.id);
 
-  const [name, setName] = useState('');
-  const [widthIn, setWidthIn] = useState('144');
-  const [heightIn, setHeightIn] = useState('96');
-  const [selected, setSelected] = useState<string | null>(null);
-  const [lengthMode, setLengthMode] = useState<LengthMode>('inches');
+  const [wallName, setWallName] = useState('');
+  const [wallWidth, setWallWidth] = useState('144');
+  const [wallHeight, setWallHeight] = useState('96');
 
   if (isLoading) return <p className="notice">Loading project…</p>;
   if (error) {
@@ -35,11 +55,13 @@ export function Project() {
     );
   }
 
-  const walls = data?.walls ?? [];
-  const active = walls.find((w) => w.id === selected) ?? walls[0];
+  const posterList = posters.data?.posters ?? [];
+  const current = placements.data?.placements ?? [];
+  const placedIds = new Set(current.map((p) => p.posterId));
 
-  /** Obstructions live inside the wall item, so any change replaces the wall. */
-  const replaceObstructions = (obstructions: Obstruction[]) => {
+  const writePlacements = (next: Placement[]) => savePlacements.mutate(next);
+
+  const replaceWall = (patch: Partial<{ backgroundColor: string; obstructions: Obstruction[] }>) => {
     if (active === undefined) return;
     updateWall.mutate({
       wallId: active.id,
@@ -47,152 +69,217 @@ export function Project() {
         name: active.name,
         widthIn: active.widthIn,
         heightIn: active.heightIn,
-        obstructions,
+        obstructions: patch.obstructions ?? active.obstructions,
+        backgroundColor: patch.backgroundColor ?? active.backgroundColor,
       },
     });
   };
 
   return (
-    <div className="sheet">
-      <div className="titleblock">
-        <div>
-          <span className="eyebrow">
-            <Link to="/projects">← All projects</Link>
-          </span>
-          <h1>{data?.project.name}</h1>
-        </div>
-        <span className="meta">
-          {walls.length} {walls.length === 1 ? 'wall' : 'walls'}
-        </span>
-      </div>
+    <div className="workspace">
+      <aside className="workspace__side">
+        <p style={{ marginTop: 0 }}>
+          <Link to="/projects">← All projects</Link>
+        </p>
+        <h1>{data?.project.name}</h1>
 
-      <form
-        className="panel"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const w = Number(widthIn);
-          const h = Number(heightIn);
-          if (name.trim() === '' || !(w > 0) || !(h > 0)) return;
-          addWall.mutate({ name: name.trim(), widthIn: w, heightIn: h });
-          setName('');
-        }}
-      >
-        <h3>Measure a wall</h3>
-        <div className="fields">
-          <div className="field field--grow">
-            <label htmlFor="wall-name">Wall</label>
-            <input
-              id="wall-name"
-              value={name}
-              placeholder="North wall"
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-          <div className="field field--num">
-            <label htmlFor="wall-width">Width (in)</label>
-            <input id="wall-width" value={widthIn} onChange={(e) => setWidthIn(e.target.value)} />
-          </div>
-          <div className="field field--num">
-            <label htmlFor="wall-height">Height (in)</label>
-            <input id="wall-height" value={heightIn} onChange={(e) => setHeightIn(e.target.value)} />
-          </div>
-          <button type="submit" className="btn--primary" disabled={addWall.isPending}>
-            {addWall.isPending ? 'Adding' : 'Add wall'}
-          </button>
-        </div>
-      </form>
-
-      {walls.length === 0 ? (
-        <div className="empty">
-          <strong>No walls yet</strong>
-          Measure a wall above and it will be drawn to scale.
-        </div>
-      ) : (
-        <>
-          <ul className="stack">
+        <h3 style={{ marginTop: 20 }}>Walls</h3>
+        {walls.length === 0 ? (
+          <p className="muted">Add a wall to start.</p>
+        ) : (
+          <ul className="list">
             {walls.map((w) => (
-              <li className="row" key={w.id}>
-                <span className="row__name">
-                  <button
-                    type="button"
-                    className="btn--tab"
-                    aria-pressed={active?.id === w.id}
-                    onClick={() => setSelected(w.id)}
-                  >
-                    {w.name}
-                  </button>
-                </span>
-                <span className="meta">
+              <li className="item" key={w.id}>
+                <button
+                  type="button"
+                  className="btn--tab btn--small"
+                  aria-pressed={active?.id === w.id}
+                  onClick={() => setSelected(w.id)}
+                >
+                  {w.name}
+                </button>
+                <span className="item__name muted">
                   {formatLength(w.widthIn, lengthMode)} × {formatLength(w.heightIn, lengthMode)}
                 </span>
                 <button
                   type="button"
-                  className="btn--quiet"
+                  className="btn--danger"
                   aria-label={`Delete ${w.name}`}
                   onClick={() => removeWall.mutate(w.id)}
                 >
-                  Delete
+                  ✕
                 </button>
               </li>
             ))}
           </ul>
+        )}
 
-          {active !== undefined && (
-            <>
-              <div className="drawing">
-                <WallCanvas wall={active} viewport={VIEWPORT} lengthMode={lengthMode} />
-              </div>
+        <form
+          className="card"
+          style={{ marginTop: 12 }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            const w = Number(wallWidth);
+            const h = Number(wallHeight);
+            if (wallName.trim() === '' || !(w > 0) || !(h > 0)) return;
+            addWall.mutate({ name: wallName.trim(), widthIn: w, heightIn: h });
+            setWallName('');
+          }}
+        >
+          <h3>Add a wall</h3>
+          <div className="fields">
+            <div className="field field--full">
+              <label htmlFor="wall-name">Name</label>
+              <input
+                id="wall-name"
+                value={wallName}
+                placeholder="North wall"
+                onChange={(e) => setWallName(e.target.value)}
+              />
+            </div>
+            <div className="field field--num">
+              <label htmlFor="wall-width">Width (in)</label>
+              <input id="wall-width" value={wallWidth} onChange={(e) => setWallWidth(e.target.value)} />
+            </div>
+            <div className="field field--num">
+              <label htmlFor="wall-height">Height (in)</label>
+              <input id="wall-height" value={wallHeight} onChange={(e) => setWallHeight(e.target.value)} />
+            </div>
+            <button type="submit" className="btn--primary btn--small" disabled={addWall.isPending}>
+              Add wall
+            </button>
+          </div>
+        </form>
 
+        {active !== undefined && (
+          <div style={{ marginTop: 20 }}>
+            <PosterPanel
+              posters={posterList}
+              placedIds={placedIds}
+              isAdding={addPoster.isPending}
+              onAdd={(poster) => addPoster.mutate(poster)}
+              onDelete={(posterId) => {
+                deletePoster.mutate(posterId);
+                writePlacements(current.filter((p) => p.posterId !== posterId));
+              }}
+              onPlace={(posterId) =>
+                writePlacements([
+                  ...current,
+                  {
+                    posterId,
+                    centerXIn: active.widthIn / 2,
+                    // 57" to centre is the standard gallery hanging height.
+                    centerYIn: Math.min(57, active.heightIn / 2),
+                  },
+                ])
+              }
+              onRemoveFromWall={(posterId) =>
+                writePlacements(current.filter((p) => p.posterId !== posterId))
+              }
+              onUpload={uploadImage}
+            />
+          </div>
+        )}
+      </aside>
+
+      <section className="workspace__main">
+        {active === undefined ? (
+          <div className="empty">Add a wall and it will be drawn here to scale.</div>
+        ) : (
+          <>
+            <div className="stagebar">
+              <strong>{active.name}</strong>
+              <span className="muted">
+                {formatLength(active.widthIn, lengthMode)} × {formatLength(active.heightIn, lengthMode)}
+              </span>
               <button
                 type="button"
-                className="btn--tab"
+                className="btn--small btn--tab"
                 aria-pressed={lengthMode === 'feet-inches'}
                 onClick={() =>
                   setLengthMode(lengthMode === 'inches' ? 'feet-inches' : 'inches')
                 }
               >
-                {lengthMode === 'inches' ? 'Show feet and inches' : 'Show inches'}
+                {lengthMode === 'inches' ? 'Feet & inches' : 'Inches'}
               </button>
 
-              <ObstructionForm
-                wall={active}
-                onSubmit={(obstruction) =>
-                  replaceObstructions([...active.obstructions, obstruction])
-                }
+              <label htmlFor="wall-bg" className="muted">Wall colour</label>
+              <input
+                id="wall-bg"
+                type="color"
+                style={{ width: 44 }}
+                value={active.backgroundColor}
+                onChange={(e) => replaceWall({ backgroundColor: e.target.value })}
               />
 
-              {active.obstructions.length > 0 && (
-                <ul className="stack">
-                  {active.obstructions.map((o) => (
-                    <li className="row" key={o.id}>
-                      <span className="row__index">{o.kind}</span>
-                      <span className="row__name">{o.label || 'Unlabelled'}</span>
-                      <span className="meta">
-                        {formatLength(o.widthIn, lengthMode)} × {formatLength(o.heightIn, lengthMode)}
-                        {' · '}
-                        {formatLength(o.xIn, lengthMode)} from left,{' '}
-                        {formatLength(o.yIn, lengthMode)} up
-                      </span>
-                      <button
-                        type="button"
-                        className="btn--quiet"
-                        aria-label={`Remove ${o.label || o.kind}`}
-                        onClick={() =>
-                          replaceObstructions(
-                            active.obstructions.filter((x) => x.id !== o.id),
-                          )
-                        }
-                      >
-                        Remove
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
-          )}
-        </>
-      )}
+              <span style={{ flex: 1 }} />
+
+              <button
+                type="button"
+                className="btn--small btn--tab"
+                aria-pressed={showSetup}
+                onClick={() => setShowSetup(!showSetup)}
+              >
+                {showSetup ? 'Hide obstructions' : 'Obstructions'}
+              </button>
+            </div>
+
+            <div className="stage">
+              <WallCanvas
+                wall={active}
+                posters={posterList}
+                placements={current}
+                viewport={VIEWPORT}
+                lengthMode={lengthMode}
+                onMove={(posterId, centerXIn, centerYIn) =>
+                  writePlacements(
+                    current.map((p) =>
+                      p.posterId === posterId ? { posterId, centerXIn, centerYIn } : p,
+                    ),
+                  )
+                }
+              />
+            </div>
+
+            {showSetup && (
+              <div>
+                <ObstructionForm
+                  wall={active}
+                  onSubmit={(obstruction) =>
+                    replaceWall({ obstructions: [...active.obstructions, obstruction] })
+                  }
+                />
+                {active.obstructions.length > 0 && (
+                  <ul className="list">
+                    {active.obstructions.map((o) => (
+                      <li className="item" key={o.id}>
+                        <span className="item__name">
+                          {o.label || o.kind}{' '}
+                          <span className="muted">
+                            {formatLength(o.widthIn, lengthMode)} × {formatLength(o.heightIn, lengthMode)}
+                          </span>
+                        </span>
+                        <button
+                          type="button"
+                          className="btn--danger"
+                          aria-label={`Remove ${o.label || o.kind}`}
+                          onClick={() =>
+                            replaceWall({
+                              obstructions: active.obstructions.filter((x) => x.id !== o.id),
+                            })
+                          }
+                        >
+                          ✕
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </section>
     </div>
   );
 }

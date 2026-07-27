@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { type AuthedEnv, cognitoVerifier, createAuthMiddleware, type TokenVerifier } from './auth.js';
 import { errorHandler, notFound } from './errors.js';
 import { type ProjectDb, defaultProjectDb, registerProjectRoutes } from './routes/projects.js';
+import { type PosterDb, defaultPosterDb, registerPosterRoutes } from './routes/posters.js';
 import { type WallDb, defaultWallDb, registerWallRoutes } from './routes/walls.js';
 
 export interface AppDeps {
@@ -11,6 +12,7 @@ export interface AppDeps {
   /** Injected by tests so routes run without AWS. */
   db?: ProjectDb;
   wallDb?: WallDb;
+  posterDb?: PosterDb;
 }
 
 // `AuthedEnv` types `c.get('user')` on routes behind `requireAuth`. `/health`
@@ -38,6 +40,7 @@ export function createApp(deps: AppDeps = {}): Hono<AuthedEnv> {
 
   registerProjectRoutes(app, requireAuth, deps.db ?? defaultProjectDb);
   registerWallRoutes(app, requireAuth, deps.wallDb ?? defaultWallDb);
+  registerPosterRoutes(app, requireAuth, deps.posterDb ?? defaultPosterDb);
 
   app.notFound(notFound);
   app.onError(errorHandler);
