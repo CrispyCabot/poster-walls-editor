@@ -1,6 +1,6 @@
-import { GetCommand } from '@aws-sdk/lib-dynamodb';
-import { PROFILE, userPk } from '@pwe/shared';
-import { docClient, tableName } from './client.js';
+import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import { PROFILE, userPk } from "@pwe/shared";
+import { docClient, tableName } from "./client.js";
 
 /**
  * Per-account ceilings.
@@ -21,11 +21,11 @@ export interface Limits {
 }
 
 export const DEFAULT_LIMITS: Limits = {
-  projects: 25,
-  postersPerProject: 200,
-  wallsPerProject: 25,
+  projects: 1,
+  postersPerProject: 50,
+  wallsPerProject: 2,
   uploadBytes: 15 * 1024 * 1024,
-  images: 500,
+  images: 10,
 };
 
 /** Raised when an account is at a ceiling. Surfaces as 429, not 500. */
@@ -36,7 +36,7 @@ export class LimitExceededError extends Error {
     message: string,
   ) {
     super(message);
-    this.name = 'LimitExceededError';
+    this.name = "LimitExceededError";
   }
 }
 
@@ -54,12 +54,14 @@ export async function limitsFor(ownerId: string): Promise<Limits> {
     }),
   );
 
-  const overrides = (result.Item?.limits ?? {}) as Partial<Record<keyof Limits, unknown>>;
+  const overrides = (result.Item?.limits ?? {}) as Partial<
+    Record<keyof Limits, unknown>
+  >;
   const merged = { ...DEFAULT_LIMITS };
 
   for (const key of Object.keys(DEFAULT_LIMITS) as (keyof Limits)[]) {
     const value = overrides[key];
-    if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+    if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
       merged[key] = value;
     }
   }
