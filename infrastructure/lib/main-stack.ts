@@ -1,4 +1,4 @@
-import { CfnOutput, Fn, Stack, type StackProps } from 'aws-cdk-lib';
+import { CfnOutput, Fn, Stack, Tags, type StackProps } from 'aws-cdk-lib';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as targets from 'aws-cdk-lib/aws-route53-targets';
@@ -7,6 +7,7 @@ import { ApiConstruct } from './constructs/api.js';
 import { AuthConstruct } from './constructs/auth.js';
 import { DataConstruct } from './constructs/data.js';
 import { WebConstruct } from './constructs/web.js';
+import { applyStandardTags } from './tags.js';
 
 /** The subdomain the app lives on. Its zone is delegated; the apex is not. */
 export const DOMAIN_NAME = 'poster-editor.chrisbridewell.dev';
@@ -30,6 +31,8 @@ export class MainStack extends Stack {
   constructor(scope: Construct, id: string, props: MainStackProps) {
     super(scope, id, props);
 
+    applyStandardTags(this);
+
     const data = new DataConstruct(this, 'Data');
 
     // Created in both phases. A zone with no records costs $0.50/month and is
@@ -38,6 +41,7 @@ export class MainStack extends Stack {
       zoneName: DOMAIN_NAME,
       comment: 'Delegated subdomain; the apex stays with the registrar',
     });
+    Tags.of(zone).add('component', 'dns');
 
     // One certificate covers both names. CloudFront requires us-east-1 and the
     // whole stack lives there, so no cross-region stack is needed.
@@ -48,6 +52,10 @@ export class MainStack extends Stack {
           validation: acm.CertificateValidation.fromDns(zone),
         })
       : undefined;
+
+    if (certificate !== undefined) {
+      Tags.of(certificate).add('component', 'dns');
+    }
 
     const web = new WebConstruct(this, 'Web', {
       ...(certificate === undefined

@@ -1,4 +1,4 @@
-import { Duration, RemovalPolicy } from 'aws-cdk-lib';
+import { Duration, RemovalPolicy, Tags } from 'aws-cdk-lib';
 import type * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
@@ -22,6 +22,13 @@ export class WebConstruct extends Construct {
 
   constructor(scope: Construct, id: string, props: WebConstructProps = {}) {
     super(scope, id);
+
+    // Default for everything here: the build-output bucket and the
+    // distribution. The images bucket overrides it below. The
+    // auto-delete-objects handler CDK adds behind the build bucket stays
+    // untagged — `CustomResourceProvider` resources are synthesized outside the
+    // construct tree, so tag aspects never visit them.
+    Tags.of(this).add('component', 'web');
 
     const bucketDefaults = {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -47,6 +54,18 @@ export class WebConstruct extends Construct {
         maxAge: 3000,
       }],
     });
+
+    // Overrides the construct-level `component: web`. This bucket is the one
+    // piece of the web tier holding irreplaceable user uploads, and its storage
+    // cost grows with usage while the build-output bucket's does not — worth
+    // separating in Cost Explorer and in any "what is safe to delete" audit.
+    //
+    // The explicit priority is what makes this override deterministic. Tag
+    // aspects default to priority 100 and are applied root-first, so a deeper
+    // scope would usually win on ordering alone — but that is an implementation
+    // detail, and stating the priority means the override cannot silently
+    // invert if the visit order ever changes.
+    Tags.of(this.imagesBucket).add('component', 'media', { priority: 200 });
 
     // Both or neither: CloudFront rejects an alias without a certificate that
     // covers it, so passing one without the other would fail at deploy time.

@@ -1,4 +1,4 @@
-import { Fn, RemovalPolicy, Stack } from 'aws-cdk-lib';
+import { Fn, RemovalPolicy, Stack, Tags } from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
 
@@ -14,6 +14,10 @@ export class AuthConstruct extends Construct {
 
   constructor(scope: Construct, id: string, props: AuthConstructProps) {
     super(scope, id);
+
+    // The user pool is RETAINed and holds real accounts, so it should never be
+    // mistaken for a disposable resource during a cleanup sweep.
+    Tags.of(this).add('component', 'auth');
 
     this.userPool = new cognito.UserPool(this, 'UserPool', {
       selfSignUpEnabled: true,

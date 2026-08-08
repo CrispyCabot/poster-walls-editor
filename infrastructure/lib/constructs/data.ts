@@ -1,4 +1,4 @@
-import { RemovalPolicy } from 'aws-cdk-lib';
+import { RemovalPolicy, Tags } from 'aws-cdk-lib';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
 
@@ -11,6 +11,10 @@ export class DataConstruct extends Construct {
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
+
+    // The only stateful resource in the stack, and the one whose cost and
+    // backup posture is worth being able to filter for on its own.
+    Tags.of(this).add('component', 'data');
 
     this.table = new dynamodb.TableV2(this, 'Table', {
       partitionKey: { name: 'PK', type: dynamodb.AttributeType.STRING },

@@ -14,6 +14,7 @@ bin/app.ts              entrypoint; instantiates the stacks
 lib/
   main-stack.ts         composes the constructs below
   bootstrap-stack.ts    GitHub OIDC provider + deploy role
+  tags.ts               project/environment tags applied by both stacks
   constructs/
     data.ts             DynamoDB table
     api.ts              Lambda + API Gateway HTTP API
@@ -31,6 +32,44 @@ test/                   synth assertions
 
 `PosterWallsBootstrap` is deployed by hand, once. GitHub Actions cannot
 deploy it, because it is what grants GitHub the ability to deploy anything.
+
+## Tagging
+
+Every taggable resource in both stacks carries three tags. `lib/tags.ts` holds
+the two constant ones; the constructs add the third. `test/tags.test.ts` sweeps
+every synthesized resource and fails if one is missing any of them.
+
+| Tag | Value | Why |
+|---|---|---|
+| `project` | `poster-walls-editor` | The account is shared with wedding-website. This is the only thing separating the two in the console and in Cost Explorer. |
+| `environment` | `prd` | There are no lower environments; `main` deploys straight to production. The tag exists so filters written today survive a staging stack appearing later. |
+| `component` | `data`, `api`, `auth`, `web`, `media`, `dns`, `ci-cd` | Which part of the system a resource belongs to. |
+
+`media` is the images bucket only, overriding the `web` its construct applies.
+That bucket is `RETAIN`ed, grows with usage, and holds the one thing here that
+cannot be rebuilt from a `git push` — worth separating from the build-output
+bucket in cost reports and in any "what is safe to delete" audit. The override
+passes an explicit `priority: 200` so it does not depend on aspect visit order.
+
+`applyStandardTags(this)` is called from each stack's **constructor**, not once
+on the `App` in `bin/app.ts`. Both propagate identically at deploy time, but the
+test suite builds its own `App`, so app-level tags would be invisible to exactly
+the assertions meant to protect them.
+
+Two things tag aspects do not reach, and neither is a bug:
+
+- `CustomResourceProvider` resources — the OIDC provider's handler and the
+  auto-delete-objects handler, plus their roles. They are synthesized outside
+  the construct tree, so no aspect visits them.
+- `AWS::Route53::RecordSet`. Record sets are not taggable in CloudFormation at
+  all; the hosted zone that holds them is.
+
+Tags surface under four different shapes in the synthesized template, which is
+why `tags.test.ts` normalizes before asserting: a `Tags` list (S3, CloudFront,
+Lambda, IAM, ACM, Logs), a `Tags` **map** (API Gateway v2), `UserPoolTags`
+(Cognito), and `HostedZoneTags` (Route 53). `TableV2` is a fifth case — it
+synthesizes to `AWS::DynamoDB::GlobalTable`, whose tags sit on each regional
+replica rather than at the top level.
 
 ## Commands
 

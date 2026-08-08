@@ -1,4 +1,4 @@
-import { Duration, RemovalPolicy } from 'aws-cdk-lib';
+import { Duration, RemovalPolicy, Tags } from 'aws-cdk-lib';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import type * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
@@ -27,6 +27,11 @@ export class ApiConstruct extends Construct {
 
   constructor(scope: Construct, id: string, props: ApiConstructProps) {
     super(scope, id);
+
+    // Covers the function, its log group, its execution role, and the HTTP API
+    // in front of it — the whole request path, which is what you want selected
+    // together when chasing latency or invocation cost.
+    Tags.of(this).add('component', 'api');
 
     // The Lambda's log group already exists in production (auto-created by
     // Lambda on first invocation, named /aws/lambda/<function-name>). We
