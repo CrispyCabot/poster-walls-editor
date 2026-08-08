@@ -69,6 +69,7 @@ To work with the infrastructure directly, see [infrastructure/README.md](infrast
 ## Docs
 
 - [Design spec](docs/superpowers/specs/2026-07-26-poster-walls-editor-design.md) — architecture and the decisions behind it
+- [Security and cost controls](docs/security.md) — how per-account limits work, how to raise one, and what is still unguarded
 - [Plans](docs/superpowers/plans/) — implementation plans
 
 ## Status
