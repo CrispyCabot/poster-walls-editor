@@ -42,6 +42,15 @@ export class AuthConstruct extends Construct {
       preventUserExistenceErrors: true,
     });
 
+    // Phase 0 of moving the shared pool to CoreInfra (household-manager
+    // spec §2). The client's default DeletionPolicy is None, so removing
+    // AuthConstruct in a later deploy would DELETE it outright rather than
+    // orphan it — and a Cognito app client can't be recreated with the same
+    // ID, so that loss would be permanent: every session dies and the
+    // client ID baked into the deployed SPA stops working. Retain must land
+    // in a deploy of its own, before AuthConstruct is ever removed.
+    this.client.applyRemovalPolicy(RemovalPolicy.RETAIN);
+
     // Cognito domain prefixes are globally unique per region, so they need a
     // unique component — but NOT the account ID. This prefix ends up in a
     // public login URL baked into the SPA bundle, so deriving it from the
@@ -62,8 +71,12 @@ export class AuthConstruct extends Construct {
     // fails with "Invalid request provided: AWS::Cognito::UserPoolDomain".
     // Do it in two deploys — first remove this call, then re-add it with the
     // new prefix. Users cannot log in during the gap between the two.
-    this.userPool.addDomain('Domain', {
+    const domain = this.userPool.addDomain('Domain', {
       cognitoDomain: { domainPrefix: this.domainPrefix },
     });
+    // Same reasoning as the client above: default DeletionPolicy is None,
+    // and removing AuthConstruct without this landing first would delete
+    // the live hosted-UI domain outright.
+    domain.applyRemovalPolicy(RemovalPolicy.RETAIN);
   }
 }
