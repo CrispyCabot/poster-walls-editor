@@ -2,9 +2,9 @@ import { CfnOutput, Fn, Stack, Tags, type StackProps } from 'aws-cdk-lib';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as targets from 'aws-cdk-lib/aws-route53-targets';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { Construct } from 'constructs';
 import { ApiConstruct } from './constructs/api.js';
-import { AuthConstruct } from './constructs/auth.js';
 import { DataConstruct } from './constructs/data.js';
 import { WebConstruct } from './constructs/web.js';
 import { applyStandardTags } from './tags.js';
@@ -67,15 +67,12 @@ export class MainStack extends Stack {
       ? `https://${DOMAIN_NAME}`
       : `https://${web.distribution.distributionDomainName}`;
 
-    const auth = new AuthConstruct(this, 'Auth', {
-      // Both origins stay registered through the cutover, so a session started
-      // on the CloudFront URL is not stranded the moment the domain goes live.
-      webOrigins: [
-        `https://${web.distribution.distributionDomainName}`,
-        ...(props.useCustomDomain ? [`https://${DOMAIN_NAME}`] : []),
-        'http://localhost:5173',
-      ],
-    });
+    // The pool is a shared, account-level resource owned by CoreInfra, not by
+    // this app (household-manager spec §2). valueForStringParameter resolves
+    // at DEPLOY time, so this stack does not need a context lookup or a
+    // synth-time AWS call.
+    const userPoolId = ssm.StringParameter.valueForStringParameter(this, '/core/auth/user-pool-id');
+    const hostedDomain = ssm.StringParameter.valueForStringParameter(this, '/core/auth/hosted-domain');
 
     const api = new ApiConstruct(this, 'Api', {
       table: data.table,
@@ -87,8 +84,8 @@ export class MainStack extends Stack {
     const apiUrl =
       api.domain === undefined ? api.httpApi.apiEndpoint : `https://${API_DOMAIN_NAME}`;
 
-    api.fn.addEnvironment('USER_POOL_ID', auth.userPool.userPoolId);
-    api.fn.addEnvironment('USER_POOL_CLIENT_ID', auth.client.userPoolClientId);
+    api.fn.addEnvironment('USER_POOL_ID', userPoolId);
+    api.fn.addEnvironment('USER_POOL_CLIENT_ID', '5gpb7s7ma6jv08rvag4q5fn6a8');
     api.fn.addEnvironment('WEB_ORIGIN', webUrl);
     api.fn.addEnvironment('IMAGES_BUCKET', web.imagesBucket.bucketName);
     // The API mints presigned PUT URLs, which requires it to hold the
@@ -121,10 +118,10 @@ export class MainStack extends Stack {
     new CfnOutput(this, 'ImagesBucketName', { value: web.imagesBucket.bucketName });
     new CfnOutput(this, 'WebBucketName', { value: web.webBucket.bucketName });
     new CfnOutput(this, 'DistributionId', { value: web.distribution.distributionId });
-    new CfnOutput(this, 'UserPoolId', { value: auth.userPool.userPoolId });
-    new CfnOutput(this, 'UserPoolClientId', { value: auth.client.userPoolClientId });
+    new CfnOutput(this, 'UserPoolId', { value: userPoolId });
+    new CfnOutput(this, 'UserPoolClientId', { value: '5gpb7s7ma6jv08rvag4q5fn6a8' });
     new CfnOutput(this, 'CognitoDomain', {
-      value: `https://${auth.domainPrefix}.auth.${this.region}.amazoncognito.com`,
+      value: `https://${hostedDomain}.auth.${this.region}.amazoncognito.com`,
     });
 
     // The whole point of phase one: these four go into the registrar.
