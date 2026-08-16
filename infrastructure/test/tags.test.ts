@@ -128,12 +128,14 @@ describe('component tags', () => {
     expect(PROJECT_TAG).toBe('poster-walls-editor');
   });
 
-  it('separates data, api, auth, web and dns within the main stack', () => {
+  it('separates data, api, web and dns within the main stack', () => {
+    // No 'auth' component here anymore: the pool moved to CoreInfra
+    // (household-manager spec §2), so this stack no longer owns any
+    // Cognito resource to tag.
     const t = synthMain();
     expect(only(t, 'AWS::DynamoDB::GlobalTable').component).toBe('data');
     expect(only(t, 'AWS::Lambda::Function').component).toBe('api');
     expect(only(t, 'AWS::ApiGatewayV2::Api').component).toBe('api');
-    expect(only(t, 'AWS::Cognito::UserPool').component).toBe('auth');
     expect(only(t, 'AWS::CloudFront::Distribution').component).toBe('web');
     expect(only(t, 'AWS::Route53::HostedZone').component).toBe('dns');
     expect(only(t, 'AWS::CertificateManager::Certificate').component).toBe('dns');

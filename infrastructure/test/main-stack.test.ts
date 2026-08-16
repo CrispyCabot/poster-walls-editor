@@ -149,17 +149,22 @@ describe('web hosting', () => {
 });
 
 describe('auth', () => {
-  it('creates a user pool that signs in by email and self-verifies it', () => {
-    synth().hasResourceProperties('AWS::Cognito::UserPool', {
-      UsernameAttributes: ['email'],
-      AutoVerifiedAttributes: ['email'],
-    });
+  it('does not create its own user pool -- the pool is a shared, account-level resource owned by CoreInfra', () => {
+    // Household-manager spec §2: this app adds only its own client, never a
+    // second competing pool.
+    const t = synth();
+    t.resourceCountIs('AWS::Cognito::UserPool', 0);
+    t.resourceCountIs('AWS::Cognito::UserPoolClient', 0);
+    t.resourceCountIs('AWS::Cognito::UserPoolDomain', 0);
   });
 
-  it('creates a public client with no secret, using authorization code + PKCE', () => {
-    synth().hasResourceProperties('AWS::Cognito::UserPoolClient', {
-      GenerateSecret: false,
-      AllowedOAuthFlows: ['code'],
+  it('wires the pool id into the Lambda from SSM, not from a locally-created resource', () => {
+    synth().hasResourceProperties('AWS::Lambda::Function', {
+      Environment: {
+        Variables: Match.objectLike({
+          USER_POOL_ID: { Ref: Match.stringLikeRegexp('^SsmParameterValuecoreauthuserpoolid') },
+        }),
+      },
     });
   });
 
