@@ -103,6 +103,9 @@ function columnX(usableWidth: number): number[] {
   return xs;
 }
 
+/** Draws the header row and advances past it, so every caller — including
+ * ensureRoom's continuation-page path — gets a `y` positioned for the first
+ * data row rather than sitting on top of the header text. */
 function drawTableHeader(ctx: RowContext, xs: number[]): void {
   COLUMNS.forEach((col, i) => {
     ctx.page.drawText(col.header, { x: xs[i]!, y: ctx.y, size: 9, font: ctx.boldFont, color: BLACK });
@@ -113,6 +116,7 @@ function drawTableHeader(ctx: RowContext, xs: number[]): void {
     thickness: 0.5,
     color: MID_GRAY,
   });
+  ctx.y -= ROW_HEIGHT;
 }
 
 interface PosterRow {
@@ -252,7 +256,6 @@ function drawWallPages(
     ctx.y -= ROW_HEIGHT;
   } else {
     drawTableHeader(ctx, xs);
-    ctx.y -= ROW_HEIGHT;
 
     for (const row of rows) {
       ctx = ensureRoom(ctx, (c) => drawTableHeader(c, xs));
