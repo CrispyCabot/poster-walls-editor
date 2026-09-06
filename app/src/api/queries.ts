@@ -15,6 +15,8 @@ import { apiFetch } from './client.js';
 export const queryKeys = {
   projects: ['projects'] as const,
   project: (id: string) => ['projects', id] as const,
+  /** Matches both the 'anon' and 'auth' variants of useProjectView's key. */
+  projectView: (id: string) => ['projects', id, 'view'] as const,
 };
 
 export interface ProjectSummary {
@@ -97,8 +99,10 @@ export function useAddWall(projectId: string) {
         method: 'POST',
         body: JSON.stringify(wall),
       }),
-    onSuccess: () =>
-      void qc.invalidateQueries({ queryKey: queryKeys.project(projectId) }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.project(projectId) });
+      void qc.invalidateQueries({ queryKey: queryKeys.projectView(projectId) });
+    },
   });
 }
 
@@ -111,8 +115,10 @@ export function useUpdateWall(projectId: string) {
         method: 'PUT',
         body: JSON.stringify(wall),
       }),
-    onSuccess: () =>
-      void qc.invalidateQueries({ queryKey: queryKeys.project(projectId) }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.project(projectId) });
+      void qc.invalidateQueries({ queryKey: queryKeys.projectView(projectId) });
+    },
   });
 }
 
@@ -124,8 +130,10 @@ export function useRemoveWall(projectId: string) {
       apiFetch<void>(`/projects/${projectId}/walls/${wallId}`, required(token), {
         method: 'DELETE',
       }),
-    onSuccess: () =>
-      void qc.invalidateQueries({ queryKey: queryKeys.project(projectId) }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.project(projectId) });
+      void qc.invalidateQueries({ queryKey: queryKeys.projectView(projectId) });
+    },
   });
 }
 
@@ -150,8 +158,10 @@ export function useAddPoster(projectId: string) {
         method: 'POST',
         body: JSON.stringify(poster),
       }),
-    onSuccess: () =>
-      void qc.invalidateQueries({ queryKey: ['projects', projectId, 'posters'] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['projects', projectId, 'posters'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.projectView(projectId) });
+    },
   });
 }
 
@@ -163,8 +173,10 @@ export function useDeletePoster(projectId: string) {
       apiFetch<void>(`/projects/${projectId}/posters/${posterId}`, required(token), {
         method: 'DELETE',
       }),
-    onSuccess: () =>
-      void qc.invalidateQueries({ queryKey: ['projects', projectId, 'posters'] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['projects', projectId, 'posters'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.projectView(projectId) });
+    },
   });
 }
 
@@ -221,6 +233,7 @@ export function useSavePlacements(projectId: string, wallId: string | undefined)
         ['projects', projectId, 'walls', wallId, 'placements'],
         data,
       );
+      void qc.invalidateQueries({ queryKey: queryKeys.projectView(projectId) });
     },
   });
 }
@@ -234,8 +247,10 @@ export function useUpdatePoster(projectId: string) {
         method: 'PUT',
         body: JSON.stringify(poster),
       }),
-    onSuccess: () =>
-      void qc.invalidateQueries({ queryKey: ['projects', projectId, 'posters'] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['projects', projectId, 'posters'] });
+      void qc.invalidateQueries({ queryKey: queryKeys.projectView(projectId) });
+    },
   });
 }
 

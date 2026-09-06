@@ -1,6 +1,6 @@
-import { type LengthMode, type SnapOptions, formatLength } from '@pwe/layout-engine';
+import { type LengthMode, type SnapOptions, findDuplicatePlacements, formatLength } from '@pwe/layout-engine';
 import type { Obstruction, Placement } from '@pwe/shared';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import {
   useAddPoster,
@@ -63,6 +63,19 @@ function ProjectEditor({ id }: { id: string }) {
 
   const walls = data?.walls ?? [];
   const active = walls.find((w) => w.id === selected) ?? walls[0];
+
+  // Shares its cache entry with the useProjectView call in Project() above, so
+  // this costs no extra request — it's just the one place that has every
+  // wall's placements at once, which per-wall usePlacements does not.
+  const view = useProjectView(id);
+  const duplicateWalls = useMemo(
+    () => findDuplicatePlacements(walls, view.data?.placementsByWall ?? {}),
+    [walls, view.data],
+  );
+  const duplicatePosterIds = useMemo(
+    () => new Set(duplicateWalls.keys()),
+    [duplicateWalls],
+  );
 
   const addWall = useAddWall(id);
   const updateWall = useUpdateWall(id);
@@ -228,6 +241,7 @@ function ProjectEditor({ id }: { id: string }) {
             <PosterPanel
               posters={posterList}
               placedIds={placedIds}
+              duplicateWalls={duplicateWalls}
               isAdding={addPoster.isPending}
               onAdd={(poster) => addPoster.mutate(poster)}
               onDelete={(posterId) => {
@@ -348,6 +362,7 @@ function ProjectEditor({ id }: { id: string }) {
                 viewport={VIEWPORT}
                 lengthMode={lengthMode}
                 snapOptions={snapOptions}
+                duplicatePosterIds={duplicatePosterIds}
                 onMove={(posterId, centerXIn, centerYIn) =>
                   writePlacements(
                     current.map((p) =>

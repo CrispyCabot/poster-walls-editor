@@ -36,6 +36,8 @@
   --accent-ink: #ffffff;
   --danger: #d40000;
   --danger-soft: #ffecec;
+  --warning: #8a5a00;
+  --warning-soft: #fff3d6;
 
   /* --- canvas chrome (NOT the wall colour itself) --- */
   --canvas-edge: #000000;
@@ -83,6 +85,8 @@
   --accent-ink: #ffffff;
   --danger: #e0455a;
   --danger-soft: #2a0d10;
+  --warning: #e0a838;
+  --warning-soft: #2a2210;
 
   --canvas-edge: #45454b;
   --canvas-selected: #e01427;

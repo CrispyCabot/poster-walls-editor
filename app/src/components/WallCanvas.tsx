@@ -35,6 +35,8 @@ export interface WallCanvasProps {
   onMove: (posterId: string, centerXIn: number, centerYIn: number) => void;
   /** Snap behaviour. Pass threshold 0 to turn snapping off. */
   snapOptions?: SnapOptions;
+  /** Posters hung on this wall AND at least one other — drawn with a warning ring. */
+  duplicatePosterIds?: Set<string>;
 }
 
 export function WallCanvas({
@@ -45,6 +47,7 @@ export function WallCanvas({
   lengthMode,
   onMove,
   snapOptions = DEFAULT_SNAP,
+  duplicatePosterIds = new Set(),
 }: WallCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [dragging, setDragging] = useState<string | null>(null);
@@ -256,6 +259,8 @@ export function WallCanvas({
             ? undefined
             : `${getConfig().imageBaseUrl}/i/${poster.imageKey}`;
 
+        const isDuplicate = duplicatePosterIds.has(placement.posterId);
+
         return (
           <g
             key={placement.posterId}
@@ -267,6 +272,7 @@ export function WallCanvas({
               setPreview(placement);
             }}
           >
+            {isDuplicate && <title>{`${poster.name} is also hung on another wall`}</title>}
             <PosterShape
               poster={poster}
               x={corner.x}
@@ -283,6 +289,19 @@ export function WallCanvas({
               }
               outlineWidth={dragging === placement.posterId ? 2 : 1}
             />
+            {isDuplicate && (
+              <rect
+                data-testid={`poster-${placement.posterId}-duplicate-warning`}
+                x={corner.x - 4}
+                y={corner.y - 4}
+                width={frameW + 8}
+                height={frameH + 8}
+                fill="none"
+                stroke="var(--warning)"
+                strokeWidth={2}
+                strokeDasharray="6 4"
+              />
+            )}
           </g>
         );
       })}

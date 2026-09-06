@@ -5,6 +5,8 @@ import { getConfig } from '../config.js';
 export interface PosterPanelProps {
   posters: Poster[];
   placedIds: Set<string>;
+  /** Poster id -> names of every wall it's hung on, present only when that's 2+. */
+  duplicateWalls: Map<string, string[]>;
   isAdding: boolean;
   onAdd: (poster: {
     name: string;
@@ -27,6 +29,7 @@ export interface PosterPanelProps {
 export function PosterPanel({
   posters,
   placedIds,
+  duplicateWalls,
   isAdding,
   onAdd,
   onDelete,
@@ -130,6 +133,11 @@ export function PosterPanel({
                   <span className="muted">
                     {p.widthIn}" × {p.heightIn}"
                   </span>
+                  {duplicateWalls.has(p.id) && (
+                    <span className="poster-chip__warning" role="alert">
+                      ⚠ Hung on multiple walls: {duplicateWalls.get(p.id)!.join(', ')}
+                    </span>
+                  )}
                 </span>
                                 {/* The input lives inside a positioned wrapper. A bare
                     absolutely-positioned input gets scrolled into view when
