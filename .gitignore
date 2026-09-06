@@ -16,6 +16,7 @@ cdk.out/
 .env.*
 !.env.example
 .aws-sam/
+aws-credentials.txt
 
 # logs
 *.log
