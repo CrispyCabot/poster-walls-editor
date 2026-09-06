@@ -3,3 +3,4 @@ export * from './geometry.js';
 export * from './viewport.js';
 export * from './snapping.js';
 export * from './duplicates.js';
+export * from './dimensions.js';

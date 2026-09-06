@@ -93,6 +93,33 @@ function ProjectEditor({ id }: { id: string }) {
   const [wallWidth, setWallWidth] = useState('144');
   const [wallHeight, setWallHeight] = useState('96');
 
+  const [printing, setPrinting] = useState(false);
+  const [printError, setPrintError] = useState<string | null>(null);
+
+  async function handlePrintDimensions() {
+    if (data === undefined) return;
+    setPrintError(null);
+    setPrinting(true);
+    try {
+      // Loaded on demand: pdf-lib is a sizeable dependency that most visits to
+      // this page never need.
+      const { buildDimensionsPdf, dimensionsFileName, downloadPdf } = await import(
+        '../print/dimensionsPdf.js'
+      );
+      const bytes = await buildDimensionsPdf(
+        walls,
+        posterList,
+        view.data?.placementsByWall ?? {},
+        lengthMode,
+      );
+      downloadPdf(bytes, dimensionsFileName(data.project.name));
+    } catch (err) {
+      setPrintError(`Could not generate the PDF. ${(err as Error).message}`);
+    } finally {
+      setPrinting(false);
+    }
+  }
+
   if (isLoading) return <p className="notice">Loading project…</p>;
   if (error) {
     return (
@@ -154,6 +181,19 @@ function ProjectEditor({ id }: { id: string }) {
               })
             }
           />
+        )}
+
+        <button
+          type="button"
+          className="btn--small"
+          style={{ marginTop: 12 }}
+          disabled={printing || walls.length === 0}
+          onClick={() => void handlePrintDimensions()}
+        >
+          {printing ? 'Preparing PDF…' : 'Print dimensions'}
+        </button>
+        {printError !== null && (
+          <p className="notice notice--alert" role="alert">{printError}</p>
         )}
 
         <h3 style={{ marginTop: 20 }}>Walls</h3>
