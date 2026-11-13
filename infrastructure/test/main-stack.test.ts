@@ -154,8 +154,17 @@ describe('auth', () => {
     // second competing pool.
     const t = synth();
     t.resourceCountIs('AWS::Cognito::UserPool', 0);
-    t.resourceCountIs('AWS::Cognito::UserPoolClient', 0);
     t.resourceCountIs('AWS::Cognito::UserPoolDomain', 0);
+  });
+
+  it('adds only the Claude connector client, redirecting solely to Claude', () => {
+    const t = synth();
+    t.resourceCountIs('AWS::Cognito::UserPoolClient', 1);
+    t.hasResourceProperties('AWS::Cognito::UserPoolClient', {
+      GenerateSecret: false,
+      AllowedOAuthFlows: ['code'],
+      CallbackURLs: ['https://claude.ai/api/mcp/auth_callback', 'https://claude.com/api/mcp/auth_callback'],
+    });
   });
 
   it('wires the pool id into the Lambda from SSM, not from a locally-created resource', () => {
@@ -173,7 +182,7 @@ describe('auth', () => {
     expect(Object.keys(outputs)).toEqual(
       expect.arrayContaining([
         'WebUrl', 'WebBucketName', 'DistributionId',
-        'UserPoolId', 'UserPoolClientId', 'CognitoDomain',
+        'UserPoolId', 'UserPoolClientId', 'CognitoDomain', 'McpConnectorUrl',
       ]),
     );
   });

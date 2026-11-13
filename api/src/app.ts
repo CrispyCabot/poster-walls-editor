@@ -8,6 +8,8 @@ import {
   type TokenVerifier,
 } from './auth.js';
 import { errorHandler, notFound } from './errors.js';
+import { type FetchLike, registerOAuthRoutes } from './mcp/oauth.js';
+import { registerMcpRoutes } from './mcp/routes.js';
 import { type ProjectDb, defaultProjectDb, registerProjectRoutes } from './routes/projects.js';
 import { type BrowseDb, defaultBrowseDb, registerBrowseRoutes } from './routes/browse.js';
 import { type PosterDb, defaultPosterDb, registerPosterRoutes } from './routes/posters.js';
@@ -21,6 +23,7 @@ export interface AppDeps {
   wallDb?: WallDb;
   posterDb?: PosterDb;
   browseDb?: BrowseDb;
+  oauthFetch?: FetchLike;
 }
 
 // `AuthedEnv` types `c.get('user')` on routes behind `requireAuth`. `/health`
@@ -55,6 +58,9 @@ export function createApp(deps: AppDeps = {}): Hono<AuthedEnv> {
   registerProjectRoutes(app, requireAuth, deps.db ?? defaultProjectDb);
   registerWallRoutes(app, requireAuth, deps.wallDb ?? defaultWallDb);
   registerPosterRoutes(app, requireAuth, deps.posterDb ?? defaultPosterDb);
+
+  registerOAuthRoutes(app, deps.oauthFetch);
+  registerMcpRoutes(app, verify, (request) => app.fetch(request));
 
   app.notFound(notFound);
   app.onError(errorHandler);

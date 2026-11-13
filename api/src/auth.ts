@@ -47,7 +47,7 @@ export function cognitoVerifier(): TokenVerifier {
     return CognitoJwtVerifier.create({
       userPoolId: process.env.USER_POOL_ID ?? '',
       tokenUse: 'access',
-      clientId: process.env.USER_POOL_CLIENT_ID ?? '',
+      clientId: [process.env.USER_POOL_CLIENT_ID ?? '', process.env.MCP_CLIENT_ID ?? ''].filter((id) => id !== ''),
     });
   }
 
