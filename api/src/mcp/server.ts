@@ -4,6 +4,7 @@ import type { Obstruction, Placement, Poster, Project, Wall } from '@pwe/shared'
 import { z } from 'zod';
 import type { ProjectView } from '../db/previews.js';
 import type { ProjectSummary } from '../db/projects.js';
+import { type ImageFetcher, layoutWall, loadArtwork, renderPng, wallSvg } from './snapshot.js';
 
 export type ApiCaller = (path: string, init?: { method?: string; body?: unknown }) => Promise<Response>;
 
@@ -117,7 +118,57 @@ const posterFields = {
   shape: z.enum(['rect', 'circle', 'diamond']).describe('Defaults to rect. Width and height are the bounding box.'),
 };
 
-export function createMcpServer(api: ApiCaller): McpServer {
+const MAX_SNAPSHOT_BASE64_CHARS = 4_000_000;
+const SNAPSHOT_TIME_BUDGET_MS = 15_000;
+
+async function snapshot(api: ApiCaller, fetchImage: ImageFetcher, projectId: string, wallId: string | undefined): Promise<CallToolResult> {
+  const view = await getView(api, projectId);
+  const walls = wallId === undefined ? view.walls : view.walls.filter((w) => w.id === wallId);
+  if (wallId !== undefined && walls.length === 0) throw new ToolError('Wall not found in that project. Call get_project to see its walls.');
+  if (walls.length === 0) return ok({ message: 'This project has no walls yet.' });
+
+  const content: CallToolResult['content'] = [];
+  const skipped: string[] = [];
+  let budget = MAX_SNAPSHOT_BASE64_CHARS;
+  const deadline = Date.now() + SNAPSHOT_TIME_BUDGET_MS;
+  for (const wall of walls) {
+    if (content.length > 0 && Date.now() > deadline) {
+      skipped.push(wall.name);
+      continue;
+    }
+    const placements = view.placementsByWall[wall.id] ?? [];
+    const onWall = new Set(placements.map((p) => p.posterId));
+    const posters = view.posters.filter((p) => onWall.has(p.id));
+    const layout = layoutWall(wall, posters, placements);
+    const artwork = await loadArtwork(layout, fetchImage);
+    const data = Buffer.from(await renderPng(wallSvg(wall, layout, artwork))).toString('base64');
+    if (content.length > 0 && data.length > budget) {
+      skipped.push(wall.name);
+      continue;
+    }
+    budget -= data.length;
+    const missingArt = posters.filter((p) => p.imageKey !== undefined && !artwork.has(p.id)).map((p) => p.name);
+    content.push(
+      {
+        type: 'text',
+        text: JSON.stringify({
+          wallId: wall.id,
+          wall: wall.name,
+          widthIn: wall.widthIn,
+          heightIn: wall.heightIn,
+          imagePx: { width: layout.width, height: layout.height },
+          posters: posters.map((p) => ({ id: p.id, name: p.name, hasArtwork: artwork.has(p.id) })),
+          ...(missingArt.length === 0 ? {} : { artworkCouldNotBeLoaded: missingArt }),
+        }),
+      },
+      { type: 'image', data, mimeType: 'image/png' },
+    );
+  }
+  if (skipped.length > 0) content.push({ type: 'text', text: `Not drawn this time, to keep the response quick and small: ${skipped.join(', ')}. Ask for each by wallId.` });
+  return { content };
+}
+
+export function createMcpServer(api: ApiCaller, fetchImage: ImageFetcher = async () => null): McpServer {
   const server = new McpServer(
     { name: 'poster-walls-editor', version: '1.0.0' },
     {
@@ -153,6 +204,20 @@ export function createMcpServer(api: ApiCaller): McpServer {
       annotations: { readOnlyHint: true },
     },
     ({ projectId }) => run(async () => summarizeView(await getView(api, projectId))),
+  );
+
+  server.registerTool(
+    'get_wall_snapshot',
+    {
+      title: 'Picture a wall',
+      description:
+        'Returns a PNG of one wall, or of every wall in the project, drawn as the app shows it: the wall’s color, doors, windows ' +
+        'and outlets, and each hung poster with its artwork, frame and shape, to scale. Posters without artwork are drawn blank. ' +
+        'Use it to see an arrangement or to show it to the user.',
+      inputSchema: { projectId: projectIdArg, wallId: wallIdArg.optional().describe('Wall id from get_project. Omit for every wall.') },
+      annotations: { readOnlyHint: true },
+    },
+    ({ projectId, wallId }) => snapshot(api, fetchImage, projectId, wallId).catch(fail),
   );
 
   server.registerTool(

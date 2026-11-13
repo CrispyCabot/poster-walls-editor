@@ -89,12 +89,14 @@ function rpc(app: App, method: string, params: unknown, token = TOKEN) {
   });
 }
 
+type Content = { type: string; text?: string; data?: string; mimeType?: string };
+
 async function callTool(app: App, name: string, args: Record<string, unknown> = {}) {
   const res = await rpc(app, 'tools/call', { name, arguments: args });
   expect(res.status).toBe(200);
-  const body = (await res.json()) as { result: { isError?: boolean; content: { text: string }[] } };
+  const body = (await res.json()) as { result: { isError?: boolean; content: Content[] } };
   const text = body.result.content[0]?.text ?? '';
-  return { isError: body.result.isError === true, text, json: () => JSON.parse(text) as Record<string, any> };
+  return { isError: body.result.isError === true, text, content: body.result.content, json: () => JSON.parse(text) as Record<string, any> };
 }
 
 beforeEach(() => {
@@ -143,6 +145,7 @@ describe('/mcp protocol', () => {
         'delete_poster',
         'delete_wall',
         'get_project',
+        'get_wall_snapshot',
         'list_projects',
         'place_poster',
         'remove_poster_from_wall',
@@ -243,5 +246,53 @@ describe('tools', () => {
     const result = await callTool(buildApp().app, 'get_project', { projectId: 'someone-elses' });
     expect(result.isError).toBe(true);
     expect(result.text).toContain('Not found');
+  });
+});
+
+describe('get_wall_snapshot', () => {
+  const BLUE_WEBP = 'UklGRhwAAABXRUJQVlA4TBAAAAAvB8ABAAdQwOh//wMR0f8A';
+
+  beforeEach(() => {
+    vi.stubEnv('IMAGE_BASE_URL', 'https://cdn.example.test');
+    vi.stubGlobal('fetch', vi.fn(async (url: string) =>
+      url === 'https://cdn.example.test/i/blue.webp' ? new Response(Buffer.from(BLUE_WEBP, 'base64')) : new Response(null, { status: 404 })));
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('returns a PNG of each wall with what was drawn on it', async () => {
+    const { app } = buildApp({
+      walls: [wall(), wall({ id: 'wall-2', name: 'Stairs' })],
+      posters: [poster({ imageKey: 'blue.webp' }), poster({ id: 'post-2', name: 'Lost', imageKey: 'missing.png' })],
+      placements: {
+        'wall-1': [{ posterId: 'post-1', centerXIn: 60, centerYIn: 57 }, { posterId: 'post-2', centerXIn: 20, centerYIn: 57 }],
+      },
+    });
+    const { isError, content } = await callTool(app, 'get_wall_snapshot', { projectId: PID });
+    expect(isError).toBe(false);
+    expect(content.map((c) => c.type)).toEqual(['text', 'image', 'text', 'image']);
+    expect(content[1]).toMatchObject({ mimeType: 'image/png' });
+    expect(Buffer.from(content[1]!.data!, 'base64').subarray(1, 4).toString()).toBe('PNG');
+    expect(JSON.parse(content[0]!.text!)).toMatchObject({
+      wall: 'Hallway',
+      imagePx: { width: 1200, height: 966 },
+      posters: [{ name: 'Mountains', hasArtwork: true }, { name: 'Lost', hasArtwork: false }],
+      artworkCouldNotBeLoaded: ['Lost'],
+    });
+    expect(JSON.parse(content[2]!.text!)).toMatchObject({ wall: 'Stairs', posters: [] });
+  });
+
+  it('draws only the requested wall', async () => {
+    const { app } = buildApp({ walls: [wall(), wall({ id: 'wall-2', name: 'Stairs' })] });
+    const { content } = await callTool(app, 'get_wall_snapshot', { projectId: PID, wallId: 'wall-2' });
+    expect(content).toHaveLength(2);
+    expect(JSON.parse(content[0]!.text!)).toMatchObject({ wall: 'Stairs' });
+  });
+
+  it('reports an unknown wall', async () => {
+    const result = await callTool(buildApp().app, 'get_wall_snapshot', { projectId: PID, wallId: 'nope' });
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain('Wall not found');
   });
 });

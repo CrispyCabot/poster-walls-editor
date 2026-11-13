@@ -102,6 +102,7 @@ export class MainStack extends Stack {
     api.fn.addEnvironment('USER_POOL_CLIENT_ID', '5gpb7s7ma6jv08rvag4q5fn6a8');
     api.fn.addEnvironment('WEB_ORIGIN', webUrl);
     api.fn.addEnvironment('IMAGES_BUCKET', web.imagesBucket.bucketName);
+    api.fn.addEnvironment('IMAGE_BASE_URL', webUrl);
     api.fn.addEnvironment('API_ORIGIN', apiUrl);
     api.fn.addEnvironment('COGNITO_DOMAIN', `https://${hostedDomain}.auth.${this.region}.amazoncognito.com`);
     api.fn.addEnvironment('MCP_CLIENT_ID', claudeConnectorClient.userPoolClientId);

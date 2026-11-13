@@ -3,6 +3,7 @@ import type { Context, Hono } from 'hono';
 import type { AuthedEnv, TokenVerifier } from '../auth.js';
 import { McpNotConfiguredError, mcpConfig, protectedResourceMetadataUrl } from './config.js';
 import { type ApiCaller, createMcpServer } from './server.js';
+import { cloudFrontImageFetcher } from './snapshot.js';
 
 export type InProcessDispatch = (request: Request) => Response | Promise<Response>;
 
@@ -44,7 +45,7 @@ export function registerMcpRoutes(app: Hono<AuthedEnv>, verify: TokenVerifier, d
         ),
       );
 
-    const server = createMcpServer(api);
+    const server = createMcpServer(api, cloudFrontImageFetcher(process.env.IMAGE_BASE_URL));
     const statelessTransport = new WebStandardStreamableHTTPServerTransport({ enableJsonResponse: true });
     await server.connect(statelessTransport);
     try {

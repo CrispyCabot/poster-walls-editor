@@ -75,7 +75,7 @@ custom connector**, paste that URL, and sign in with your Poster Walls Editor
 account when asked. Leave the OAuth client fields blank: Claude registers itself.
 
 Tools: `list_projects`, `get_project`, `create_project`, `update_project`,
-`add_wall`, `update_wall`, `delete_wall`, `add_poster`, `update_poster`,
+`get_wall_snapshot`, `add_wall`, `update_wall`, `delete_wall`, `add_poster`, `update_poster`,
 `delete_poster`, `place_poster`, `remove_poster_from_wall`,
 `browse_public_projects`. Each calls the REST API in-process as the signed-in
 user, so ownership checks and validation match the app. Images can only be
