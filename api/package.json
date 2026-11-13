@@ -10,6 +10,7 @@
     "@aws-sdk/lib-dynamodb": "^3.1095.0",
     "@aws-sdk/s3-request-presigner": "^3.1095.0",
     "@hono/node-server": "^1.19.17",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@pwe/shared": "*",
     "aws-jwt-verify": "^5.2.1",
     "hono": "^4.12.32",

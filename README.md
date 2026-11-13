@@ -66,6 +66,27 @@ against the resulting stack outputs, and publishes it.
 
 To work with the infrastructure directly, see [infrastructure/README.md](infrastructure/README.md).
 
+## Claude connector
+
+The API also serves an [MCP](https://modelcontextprotocol.io) server at
+`https://api.poster-editor.chrisbridewell.dev/mcp`, so Claude can read and edit
+your projects, walls and posters. In Claude go to **Settings → Connectors → Add
+custom connector**, paste that URL, and sign in with your Poster Walls Editor
+account when asked. Leave the OAuth client fields blank: Claude registers itself.
+
+Tools: `list_projects`, `get_project`, `create_project`, `update_project`,
+`add_wall`, `update_wall`, `delete_wall`, `add_poster`, `update_poster`,
+`delete_poster`, `place_poster`, `remove_poster_from_wall`,
+`browse_public_projects`. Each calls the REST API in-process as the signed-in
+user, so ownership checks and validation match the app. Images can only be
+uploaded in the app.
+
+Sign-in is OAuth through the shared Cognito pool, via a thin facade in
+`api/src/mcp/oauth.ts` (Cognito has no dynamic client registration). The
+connector has its own public, PKCE-only client, `ClaudeConnectorClient` in
+`infrastructure/lib/main-stack.ts`, which only redirects to Claude's callback
+URLs. Nothing about it is secret.
+
 ## Docs
 
 - [Design spec](docs/superpowers/specs/2026-07-26-poster-walls-editor-design.md) — architecture and the decisions behind it

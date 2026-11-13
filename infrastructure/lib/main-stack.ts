@@ -1,4 +1,5 @@
-import { CfnOutput, Fn, Stack, Tags, type StackProps } from 'aws-cdk-lib';
+import { CfnOutput, Duration, Fn, Stack, Tags, type StackProps } from 'aws-cdk-lib';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as targets from 'aws-cdk-lib/aws-route53-targets';
@@ -84,10 +85,26 @@ export class MainStack extends Stack {
     const apiUrl =
       api.domain === undefined ? api.httpApi.apiEndpoint : `https://${API_DOMAIN_NAME}`;
 
+    const claudeConnectorClient = cognito.UserPool.fromUserPoolId(this, 'SharedUserPool', userPoolId).addClient('ClaudeConnectorClient', {
+      generateSecret: false,
+      oAuth: {
+        flows: { authorizationCodeGrant: true },
+        scopes: [cognito.OAuthScope.OPENID, cognito.OAuthScope.EMAIL, cognito.OAuthScope.PROFILE],
+        callbackUrls: ['https://claude.ai/api/mcp/auth_callback', 'https://claude.com/api/mcp/auth_callback'],
+      },
+      preventUserExistenceErrors: true,
+      refreshTokenValidity: Duration.days(90),
+      accessTokenValidity: Duration.hours(1),
+      idTokenValidity: Duration.hours(1),
+    });
+
     api.fn.addEnvironment('USER_POOL_ID', userPoolId);
     api.fn.addEnvironment('USER_POOL_CLIENT_ID', '5gpb7s7ma6jv08rvag4q5fn6a8');
     api.fn.addEnvironment('WEB_ORIGIN', webUrl);
     api.fn.addEnvironment('IMAGES_BUCKET', web.imagesBucket.bucketName);
+    api.fn.addEnvironment('API_ORIGIN', apiUrl);
+    api.fn.addEnvironment('COGNITO_DOMAIN', `https://${hostedDomain}.auth.${this.region}.amazoncognito.com`);
+    api.fn.addEnvironment('MCP_CLIENT_ID', claudeConnectorClient.userPoolClientId);
     // The API mints presigned PUT URLs, which requires it to hold the
     // permission it is delegating.
     web.imagesBucket.grantPut(api.fn);
@@ -120,6 +137,7 @@ export class MainStack extends Stack {
     new CfnOutput(this, 'DistributionId', { value: web.distribution.distributionId });
     new CfnOutput(this, 'UserPoolId', { value: userPoolId });
     new CfnOutput(this, 'UserPoolClientId', { value: '5gpb7s7ma6jv08rvag4q5fn6a8' });
+    new CfnOutput(this, 'McpConnectorUrl', { value: `${apiUrl}/mcp` });
     new CfnOutput(this, 'CognitoDomain', {
       value: `https://${hostedDomain}.auth.${this.region}.amazoncognito.com`,
     });
