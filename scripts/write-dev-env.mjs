@@ -57,6 +57,7 @@ writeFileSync(
     `USER_POOL_ID=${o.UserPoolId}`,
     `USER_POOL_CLIENT_ID=${o.UserPoolClientId}`,
     `IMAGES_BUCKET=${o.ImagesBucketName}`,
+    `IMAGE_BASE_URL=${o.WebUrl}`,
     `PORT=${API_PORT}`,
     '',
   ].join('\n'),

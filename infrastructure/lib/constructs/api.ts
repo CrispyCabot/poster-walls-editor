@@ -9,6 +9,8 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 import { fileURLToPath } from 'node:url';
 
+const WASM_PACKAGES = ['@resvg/resvg-wasm', '@jsquash/webp'];
+
 export interface ApiConstructProps {
   readonly table: dynamodb.TableV2;
   /**
@@ -51,14 +53,26 @@ export class ApiConstruct extends Construct {
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_24_X,
       architecture: lambda.Architecture.ARM_64,
-      memorySize: 512,
-      timeout: Duration.seconds(15),
+      // Wall snapshots decode full-size poster photos in WebAssembly.
+      memorySize: 1024,
+      timeout: Duration.seconds(29),
       logGroup,
       environment: {
         TABLE_NAME: props.table.tableName,
         NODE_OPTIONS: '--enable-source-maps',
       },
-      bundling: { minify: true, sourceMap: true },
+      bundling: {
+        minify: true,
+        sourceMap: true,
+        define: { 'import.meta.url': '__importMetaUrl' },
+        banner: 'var __importMetaUrl = require("url").pathToFileURL(__filename).href;',
+        commandHooks: {
+          beforeBundling: () => [],
+          beforeInstall: () => [],
+          afterBundling: (inputDir, outputDir) =>
+            WASM_PACKAGES.map((pkg) => `node -e "require('fs').cpSync(process.argv[1], process.argv[2], { recursive: true })" "${inputDir}/node_modules/${pkg}" "${outputDir}/node_modules/${pkg}"`),
+        },
+      },
     });
 
     props.table.grantReadWriteData(this.fn);
