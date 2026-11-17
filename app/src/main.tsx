@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router';
 import './styles.css';
+import { startAnalytics } from './analytics.js';
 import { applyTheme } from './theme/config.js';
 import { AuthProvider } from './auth/AuthProvider.js';
 import { Masthead } from './components/Masthead.js';
@@ -14,6 +15,7 @@ import { Projects } from './routes/Projects.js';
 
 // Sets data-theme on <html>. Change ACTIVE_THEME in theme/config.ts to swap.
 applyTheme();
+startAnalytics();
 
 const root = document.getElementById('root');
 if (!root) throw new Error('#root not found');

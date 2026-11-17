@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useScreenView } from '../analytics.js';
 import { useCreateProject, useDeleteProject, useProjectPreviews } from '../api/queries.js';
 import { ProjectCard } from '../components/ProjectCard.js';
 
@@ -7,6 +8,7 @@ export function Projects() {
   const create = useCreateProject();
   const remove = useDeleteProject();
   const [name, setName] = useState('');
+  useScreenView('projects');
 
   if (isLoading) return <p className="notice">Loading your projects…</p>;
 
