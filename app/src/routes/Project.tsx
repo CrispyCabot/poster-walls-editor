@@ -2,6 +2,7 @@ import { type LengthMode, type SnapOptions, findDuplicatePlacements, formatLengt
 import type { Obstruction, Placement } from '@pwe/shared';
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
+import { logEvent, useScreenView } from '../analytics.js';
 import {
   useAddPoster,
   useAddWall,
@@ -55,6 +56,7 @@ function ProjectEditor({ id }: { id: string }) {
   const [lengthMode, setLengthMode] = useState<LengthMode>('inches');
   const [showSetup, setShowSetup] = useState(false);
   const [snapOn, setSnapOn] = useState(true);
+  useScreenView('project_editor');
 
   // Threshold 0 turns snapping off without changing any other behaviour.
   const snapOptions: SnapOptions = snapOn
@@ -113,6 +115,7 @@ function ProjectEditor({ id }: { id: string }) {
         lengthMode,
       );
       downloadPdf(bytes, dimensionsFileName(data.project.name));
+      logEvent('dimensions_printed', { length_mode: lengthMode });
     } catch (err) {
       setPrintError(`Could not generate the PDF. ${(err as Error).message}`);
     } finally {
@@ -143,18 +146,22 @@ function ProjectEditor({ id }: { id: string }) {
       backgroundColor: string;
       obstructions: Obstruction[];
     }>,
+    onSaved?: () => void,
   ) => {
     if (active === undefined) return;
-    updateWall.mutate({
-      wallId: active.id,
-      wall: {
-        name: patch.name ?? active.name,
-        widthIn: patch.widthIn ?? active.widthIn,
-        heightIn: patch.heightIn ?? active.heightIn,
-        obstructions: patch.obstructions ?? active.obstructions,
-        backgroundColor: patch.backgroundColor ?? active.backgroundColor,
+    updateWall.mutate(
+      {
+        wallId: active.id,
+        wall: {
+          name: patch.name ?? active.name,
+          widthIn: patch.widthIn ?? active.widthIn,
+          heightIn: patch.heightIn ?? active.heightIn,
+          obstructions: patch.obstructions ?? active.obstructions,
+          backgroundColor: patch.backgroundColor ?? active.backgroundColor,
+        },
       },
-    });
+      { onSuccess: () => onSaved?.() },
+    );
   };
 
   return (
@@ -289,15 +296,18 @@ function ProjectEditor({ id }: { id: string }) {
                 writePlacements(current.filter((p) => p.posterId !== posterId));
               }}
               onPlace={(posterId) =>
-                writePlacements([
-                  ...current,
-                  {
-                    posterId,
-                    centerXIn: active.widthIn / 2,
-                    // 57" to centre is the standard gallery hanging height.
-                    centerYIn: Math.min(57, active.heightIn / 2),
-                  },
-                ])
+                savePlacements.mutate(
+                  [
+                    ...current,
+                    {
+                      posterId,
+                      centerXIn: active.widthIn / 2,
+                      // 57" to centre is the standard gallery hanging height.
+                      centerYIn: Math.min(57, active.heightIn / 2),
+                    },
+                  ],
+                  { onSuccess: () => logEvent('poster_placed', {}) },
+                )
               }
               onRemoveFromWall={(posterId) =>
                 writePlacements(current.filter((p) => p.posterId !== posterId))
@@ -307,18 +317,21 @@ function ProjectEditor({ id }: { id: string }) {
                 const poster = posterList.find((p) => p.id === posterId);
                 if (poster === undefined) return;
                 // A full replace keeps the id, so existing placements survive.
-                updatePoster.mutate({
-                  posterId,
-                  poster: {
-                    name: poster.name,
-                    widthIn: poster.widthIn,
-                    heightIn: poster.heightIn,
-                    frameWidthIn: poster.frameWidthIn,
-                    frameColor: poster.frameColor,
-                    shape: poster.shape,
-                    imageKey,
+                updatePoster.mutate(
+                  {
+                    posterId,
+                    poster: {
+                      name: poster.name,
+                      widthIn: poster.widthIn,
+                      heightIn: poster.heightIn,
+                      frameWidthIn: poster.frameWidthIn,
+                      frameColor: poster.frameColor,
+                      shape: poster.shape,
+                      imageKey,
+                    },
                   },
-                });
+                  { onSuccess: () => logEvent('poster_image_set', {}) },
+                );
               }}
             />
           </div>
@@ -374,11 +387,11 @@ function ProjectEditor({ id }: { id: string }) {
                 onClick={() => {
                   const project = data?.project;
                   if (project === undefined) return;
-                  updateProject.mutate({
-                    name: project.name,
-                    visibility: project.visibility === 'public' ? 'private' : 'public',
-                    version: project.version,
-                  });
+                  const visibility = project.visibility === 'public' ? 'private' : 'public';
+                  updateProject.mutate(
+                    { name: project.name, visibility, version: project.version },
+                    { onSuccess: () => logEvent('project_visibility_changed', { visibility }) },
+                  );
                 }}
               >
                 {data?.project.visibility === 'public' ? 'Public' : 'Private'}
@@ -418,7 +431,9 @@ function ProjectEditor({ id }: { id: string }) {
                 <ObstructionForm
                   wall={active}
                   onSubmit={(obstruction) =>
-                    replaceWall({ obstructions: [...active.obstructions, obstruction] })
+                    replaceWall({ obstructions: [...active.obstructions, obstruction] }, () =>
+                      logEvent('obstruction_added', { obstruction_kind: obstruction.kind }),
+                    )
                   }
                 />
                 {active.obstructions.length > 0 && (

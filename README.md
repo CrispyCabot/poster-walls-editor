@@ -91,6 +91,7 @@ URLs. Nothing about it is secret.
 
 - [Design spec](docs/superpowers/specs/2026-07-26-poster-walls-editor-design.md) — architecture and the decisions behind it
 - [Plans](docs/superpowers/plans/) — implementation plans
+- [Analytics](docs/analytics.md) — Google Analytics setup, events and where to look
 
 ## Status
 

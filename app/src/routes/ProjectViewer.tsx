@@ -1,6 +1,7 @@
 import { type LengthMode, formatLength } from '@pwe/layout-engine';
 import { useState } from 'react';
 import { Link } from 'react-router';
+import { useScreenView } from '../analytics.js';
 import type { ProjectView } from '../api/queries.js';
 import { WallCanvas } from '../components/WallCanvas.js';
 
@@ -17,6 +18,7 @@ const VIEWPORT = { width: 1400, height: 900, padding: 40 };
 export function ProjectViewer({ view }: { view: ProjectView }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [lengthMode, setLengthMode] = useState<LengthMode>('inches');
+  useScreenView('project_viewer');
 
   const walls = view.walls;
   const active = walls.find((w) => w.id === selected) ?? walls[0];

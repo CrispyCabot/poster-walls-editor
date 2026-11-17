@@ -1,8 +1,10 @@
 import { Link } from 'react-router';
+import { useScreenView } from '../analytics.js';
 import { useProjectPreviews } from '../api/queries.js';
 import { useAuth } from '../auth/AuthProvider.js';
 import { BrowseProjects } from '../components/BrowseProjects.js';
 import { ProjectCard } from '../components/ProjectCard.js';
+import { UsageStats } from '../components/UsageStats.js';
 
 /**
  * How many of your own projects the home page shows.
@@ -64,6 +66,7 @@ function YourProjects() {
 
 export function Home() {
   const { status, signIn } = useAuth();
+  useScreenView('home');
 
   if (status === 'loading') return <p className="notice">Loading…</p>;
 
@@ -83,6 +86,7 @@ export function Home() {
 
         {/* Browsing needs no account, so the gate does not hide it. */}
         <BrowseProjects />
+        <UsageStats />
       </div>
     );
   }
@@ -92,6 +96,7 @@ export function Home() {
       <YourProjects />
       <hr className="rule" />
       <BrowseProjects />
+      <UsageStats />
     </div>
   );
 }

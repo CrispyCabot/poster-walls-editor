@@ -8,6 +8,7 @@ import type {
   Wall,
 } from '@pwe/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { logEvent } from '../analytics.js';
 import { useAuth } from '../auth/AuthProvider.js';
 import { getConfig } from '../config.js';
 import { apiFetch } from './client.js';
@@ -76,7 +77,10 @@ export function useCreateProject() {
         method: 'POST',
         body: JSON.stringify({ name }),
       }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: queryKeys.projects }),
+    onSuccess: () => {
+      logEvent('project_created', {});
+      void qc.invalidateQueries({ queryKey: queryKeys.projects });
+    },
   });
 }
 
@@ -100,6 +104,7 @@ export function useAddWall(projectId: string) {
         body: JSON.stringify(wall),
       }),
     onSuccess: () => {
+      logEvent('wall_added', {});
       void qc.invalidateQueries({ queryKey: queryKeys.project(projectId) });
       void qc.invalidateQueries({ queryKey: queryKeys.projectView(projectId) });
     },
@@ -158,7 +163,11 @@ export function useAddPoster(projectId: string) {
         method: 'POST',
         body: JSON.stringify(poster),
       }),
-    onSuccess: () => {
+    onSuccess: (_data, poster) => {
+      logEvent('poster_added', {
+        poster_shape: poster.shape ?? 'rect',
+        has_image: poster.imageKey === undefined ? 'no' : 'yes',
+      });
       void qc.invalidateQueries({ queryKey: ['projects', projectId, 'posters'] });
       void qc.invalidateQueries({ queryKey: queryKeys.projectView(projectId) });
     },

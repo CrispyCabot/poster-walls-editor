@@ -670,6 +670,23 @@ button:disabled {
   margin: 32px 0;
 }
 
+.usagestats {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: var(--border-width) solid var(--border);
+}
+
+.usagestats label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.usagestats p {
+  margin: 6px 0 0;
+}
+
 /* Section links that read as an action rather than body-copy hyperlinks. */
 .pagehead a {
   text-decoration: none;
